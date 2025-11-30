@@ -1,6 +1,6 @@
 package com.easysports.model;
 
-import com.easysports.enums.Sport;
+import com.easysports.enums.Deporte;
 import com.easysports.enums.MatchType;
 import com.easysports.enums.MatchStatus;
 import jakarta.persistence.*;
@@ -36,7 +36,7 @@ public class Match {
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Sport deporte;
+    private Deporte deporte;
 
     /**
      * Define si el partido es una reunión casual o un reto formal entre equipos.
@@ -85,6 +85,12 @@ public class Match {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cancha_id")
     private Court cancha;
+
+    /**
+     * Nombre de la cancha de texto si no se selecciona una cancha existente (opcional).
+     */
+    @Column(name = "nombre_cancha_texto", length = 150)
+    private String nombreCanchaTexto;
 
     /**
      * Número máximo de jugadores permitidos. Crucial para partidos casuales.

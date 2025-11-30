@@ -1,18 +1,21 @@
 package com.easysports.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 /**
- * Representa una cancha o lugar físico donde se lleva a cabo un encuentro.
+ * Entidad que representa una cancha o lugar físico donde se lleva a cabo un encuentro.
+ * Mapea a la tabla "canchas".
  */
 @Entity
 @Table(name = "canchas")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Court {
 
     @Id
@@ -28,6 +31,18 @@ public class Court {
     /**
      * Dirección o enlace a la ubicación en un mapa (Ej: Google Maps, Waze).
      */
-    @Column(length = 255)
-    private String ubicacion;
+    @Column(length = 255, name = "direccion")
+    private String direccion;
+
+    /**
+     * Indica si el uso de la cancha tiene un costo asociado.
+     */
+    @Column(name = "tiene_costo")
+    private Boolean tieneCosto;
+
+    /**
+     * Tipo de superficie de la cancha (Ej: "Césped Natural", "Parquet", "Asfalto").
+     */
+    @Column(name = "tipo_superficie", length = 50)
+    private String tipoSuperficie;
 }

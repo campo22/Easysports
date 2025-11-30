@@ -7,8 +7,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * Implementación de {@link UserDetails} de Spring Security para nuestro modelo de usuario.
@@ -26,7 +27,14 @@ public class UserDetailsImpl implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getRol().name()));
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER")); // Rol base para todos
+
+        if (Boolean.TRUE.equals(user.getEsLeagueManager())) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_LEAGUE_MANAGER"));
+        }
+
+        return authorities;
     }
 
     /**

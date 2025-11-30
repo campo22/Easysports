@@ -3,14 +3,14 @@ package com.easysports.controller;
 import com.easysports.dto.auth.AuthResponse;
 import com.easysports.dto.auth.LoginRequest;
 import com.easysports.dto.auth.RegisterRequest;
-import com.easysports.service.impl.AuthService;
+import com.easysports.dto.user.UpdateUserRequest; // Importar el nuevo DTO
+import com.easysports.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication; // Importar Authentication
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST para la gestión de la autenticación de usuarios.
@@ -52,5 +52,20 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         String jwt = authService.login(request);
         return ResponseEntity.ok(new AuthResponse(jwt));
+    }
+
+    /**
+     * Endpoint para actualizar el perfil de un usuario autenticado.
+     * Solo usuarios autenticados con rol 'USER' pueden actualizar su perfil.
+     *
+     * @param request Datos para la actualización del perfil.
+     * @param authentication Contexto de autenticación del usuario.
+     * @return {@link ResponseEntity} con estado HTTP 200 si la actualización es exitosa.
+     */
+    @PutMapping("/profile")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> updateProfile(@Valid @RequestBody UpdateUserRequest request, Authentication authentication) {
+        authService.updateProfile(request, authentication);
+        return ResponseEntity.ok().build();
     }
 }

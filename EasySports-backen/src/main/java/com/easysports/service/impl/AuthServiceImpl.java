@@ -2,22 +2,28 @@ package com.easysports.service.impl;
 
 import com.easysports.dto.auth.LoginRequest;
 import com.easysports.dto.auth.RegisterRequest;
-import com.easysports.enums.Role;
+import com.easysports.dto.user.UpdateUserRequest; // Importar el nuevo DTO
+import com.easysports.enums.Sexo;
 import com.easysports.model.User;
 import com.easysports.repository.UserRepository;
 import com.easysports.security.UserDetailsImpl;
+import com.easysports.service.AuthService;
 import com.easysports.util.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication; // Importar Authentication
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 /**
- * Servicio encargado de la lógica de negocio para la autenticación de usuarios (registro y login).
+ * Implementación del servicio de autenticación.
+ * Contiene la lógica de negocio para el registro y login de usuarios.
  */
 @Service
-public class AuthService {
+public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,7 +38,7 @@ public class AuthService {
      * @param jwtUtil             Utilidad para la generación y validación de JWT.
      * @param authenticationManager Gestor de autenticación de Spring Security.
      */
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -40,24 +46,24 @@ public class AuthService {
     }
 
     /**
-     * Registra un nuevo usuario en la aplicación.
-     * Hashea la contraseña antes de guardarla.
-     * Por defecto, asigna el rol {@code ROLE_USER} al nuevo usuario.
-     *
-     * @param request Datos de registro del usuario.
-     * @return El token JWT generado para el nuevo usuario.
-     * @throws IllegalStateException Si el email ya está registrado.
+     * {@inheritDoc}
      */
+    @Override
     public String register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalStateException("El email ya está registrado.");
         }
 
-        User user = new User();
-        user.setNombre(request.getNombre());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRol(Role.ROLE_USER); // Asignar rol por defecto
+        User user = User.builder()
+                .nombreCompleto(request.getNombreCompleto())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .sexo(Sexo.valueOf(request.getSexo().toUpperCase()))
+                .edadAnios(request.getEdadAnios())
+                .edadMeses(request.getEdadMeses())
+                .esLeagueManager(false) // Valor por defecto según documento maestro
+                .puntuacion(new BigDecimal("5.0")) // Valor por defecto según documento maestro
+                .build();
 
         userRepository.save(user);
 
@@ -67,12 +73,9 @@ public class AuthService {
     }
 
     /**
-     * Autentica a un usuario y genera un token JWT si las credenciales son válidas.
-     *
-     * @param request Credenciales del usuario (email y contraseña).
-     * @return El token JWT generado para el usuario autenticado.
-     * @throws UsernameNotFoundException Si las credenciales son inválidas.
+     * {@inheritDoc}
      */
+    @Override
     public String login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -86,5 +89,28 @@ public class AuthService {
 
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
         return jwtUtil.generateToken(userDetails);
+    }
+
+    @Override
+    public void updateProfile(UpdateUserRequest request, Authentication authentication) {
+        // Obtener el usuario autenticado
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        User user = userRepository.findById(userDetails.getUser().getId())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado."));
+
+        // Actualizar los campos del usuario con los valores del DTO
+        // Solo actualizamos si el campo no es nulo en el DTO
+        if (request.getNombreCompleto() != null) {
+            user.setNombreCompleto(request.getNombreCompleto());
+        }
+        if (request.getPosicionPreferida() != null) {
+            user.setPosicionPreferida(request.getPosicionPreferida());
+        }
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        // Guardar los cambios
+        userRepository.save(user);
     }
 }
