@@ -1,6 +1,7 @@
 package com.easysports.controller;
 
 import com.easysports.dto.team.CreateTeamRequest;
+import com.easysports.dto.team.InvitarMiembroRequest; // Importar
 import com.easysports.dto.team.TeamResponse;
 import com.easysports.service.TeamService;
 import jakarta.validation.Valid;
@@ -9,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List; // Importar para getMisEquipos
 
 /**
  * Controlador REST para la gestión de equipos.
@@ -40,5 +43,60 @@ public class TeamController {
     public ResponseEntity<TeamResponse> createTeam(@Valid @RequestBody CreateTeamRequest request, Authentication authentication) {
         TeamResponse response = teamService.createTeam(request, authentication);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    /**
+     * Invita a un usuario a unirse a un equipo.
+     * Solo el capitán del equipo puede invitar.
+     * @param equipoId ID del equipo al que se invita.
+     * @param request DTO con el email del usuario a invitar.
+     * @param authentication Contexto de autenticación del capitán.
+     * @return ResponseEntity con estado HTTP 200 si la invitación es exitosa.
+     */
+    @PostMapping("/{equipoId}/invitar")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> invitarMiembro(@PathVariable Long equipoId, @Valid @RequestBody InvitarMiembroRequest request, Authentication authentication) {
+        teamService.invitarMiembro(equipoId, request, authentication);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Acepta una invitación a unirse a un equipo.
+     * Solo el usuario destinatario de la invitación puede aceptarla.
+     * @param equipoId ID del equipo al que se acepta la invitación.
+     * @param authentication Contexto de autenticación del usuario que acepta.
+     * @return ResponseEntity con estado HTTP 200 si la aceptación es exitosa.
+     */
+    @PutMapping("/{equipoId}/invitaciones/aceptar")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> aceptarInvitacion(@PathVariable Long equipoId, Authentication authentication) {
+        teamService.aceptarInvitacion(equipoId, authentication);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Rechaza una invitación a unirse a un equipo.
+     * Solo el usuario destinatario de la invitación puede rechazarla.
+     * @param equipoId ID del equipo al que se rechaza la invitación.
+     * @param authentication Contexto de autenticación del usuario que rechaza.
+     * @return ResponseEntity con estado HTTP 200 si el rechazo es exitoso.
+     */
+    @PutMapping("/{equipoId}/invitaciones/rechazar")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> rechazarInvitacion(@PathVariable Long equipoId, Authentication authentication) {
+        teamService.rechazarInvitacion(equipoId, authentication);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Obtiene los equipos a los que pertenece o ha sido invitado un usuario autenticado.
+     * @param authentication Contexto de autenticación del usuario.
+     * @return ResponseEntity con una lista de equipos del usuario.
+     */
+    @GetMapping("/mios") // O "/miembroships" o "/equipos"
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<TeamResponse>> getMisEquipos(Authentication authentication) {
+        List<TeamResponse> equipos = teamService.getMisEquipos(authentication);
+        return ResponseEntity.ok(equipos);
     }
 }

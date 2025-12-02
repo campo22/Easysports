@@ -1,6 +1,7 @@
 package com.easysports.dto.team;
 
 import com.easysports.enums.Deporte;
+import com.easysports.enums.EstadoMiembro; // Importar
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,4 +21,7 @@ public class TeamResponse {
     private Deporte tipoDeporte;
     private Long capitanId;
     private Integer partidosGanados;
+
+    // Opcional: Incluir el estado de la membresía del usuario autenticado en este equipo
+    private EstadoMiembro estadoMiembro;
 }

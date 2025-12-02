@@ -39,12 +39,7 @@ public class Team {
     @Column(name = "partidos_ganados", nullable = false)
     private Integer partidosGanados = 0;
 
-    // Relación muchos a muchos con usuarios (miembros del equipo)
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "miembros_equipos",
-            joinColumns = @JoinColumn(name = "equipo_id"),
-            inverseJoinColumns = @JoinColumn(name = "usuario_id")
-    )
-    private List<User> miembros;
+    // Relación uno a muchos con MiembroEquipo (un equipo tiene muchos miembros)
+    @OneToMany(mappedBy = "equipo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<MiembroEquipo> miembrosEquipo; // Cambiado de 'miembros' a 'miembrosEquipo'
 }

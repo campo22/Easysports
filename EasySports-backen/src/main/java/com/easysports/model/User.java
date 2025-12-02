@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List; // Importar
 
 /**
  * Entidad que representa a un usuario en la base de datos.
@@ -61,4 +62,8 @@ public class User {
     @CreationTimestamp
     @Column(name = "fecha_registro", updatable = false)
     private LocalDateTime fechaRegistro;
+
+    // Relación uno a muchos con MiembroEquipo (un usuario puede pertenecer a muchos equipos)
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<MiembroEquipo> miembroEquipoList; // Lista de pertenencias/invitaciones del usuario
 }
