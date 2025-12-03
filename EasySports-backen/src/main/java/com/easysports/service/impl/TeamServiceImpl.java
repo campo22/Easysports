@@ -3,7 +3,6 @@ package com.easysports.service.impl;
 import com.easysports.dto.team.CreateTeamRequest;
 import com.easysports.dto.team.InvitarMiembroRequest;
 import com.easysports.dto.team.TeamResponse;
-import com.easysports.dto.team.UpdateTeamRequest;
 import com.easysports.enums.Deporte;
 import com.easysports.enums.EstadoMiembro;
 import com.easysports.enums.RolMiembro;
@@ -24,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -74,20 +74,25 @@ public class TeamServiceImpl implements TeamService {
         Team equipo = teamRepository.findById(equipoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
 
-        if (!equipo.getCapitan().getId().equals(capitanId)) {
+        if (!Objects.equals(equipo.getCapitan().getId(), capitanId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para invitar a miembros a este equipo.");
         }
 
         User usuarioAInvitar = userRepository.findByEmail(request.getEmailUsuario())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario a invitar no encontrado."));
 
-        // ... (existing logic for checking membership status)
+        // Validar si ya es miembro o tiene invitación pendiente
+        if (miembroEquipoRepository.findByUsuarioIdAndEquipoId(usuarioAInvitar.getId(), equipoId).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya es miembro o tiene una invitación pendiente para este equipo.");
+        }
 
-        MiembroEquipo nuevaInvitacion = new MiembroEquipo();
-        // ... set fields ...
-        nuevaInvitacion.setEquipo(equipo);
-        nuevaInvitacion.setUsuario(usuarioAInvitar);
-
+        MiembroEquipo nuevaInvitacion = MiembroEquipo.builder()
+                .equipo(equipo)
+                .usuario(usuarioAInvitar)
+                .estado(EstadoMiembro.INVITADO_PENDIENTE)
+                .rol(RolMiembro.MIEMBRO) // Rol por defecto, puede ser cambiado por el capitán luego
+                .fechaEstado(LocalDateTime.now())
+                .build();
 
         miembroEquipoRepository.save(nuevaInvitacion);
     }
@@ -99,7 +104,7 @@ public class TeamServiceImpl implements TeamService {
         Long usuarioId = userDetails.getUser().getId();
 
         MiembroEquipo invitacion = miembroEquipoRepository.findByUsuarioIdAndEquipoIdAndEstado(usuarioId, equipoId, EstadoMiembro.INVITADO_PENDIENTE)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró una invitación pendiente para este equipo."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró una invitación pendiente para este equipo para el usuario actual."));
 
         invitacion.setEstado(EstadoMiembro.ACEPTADO);
         invitacion.setFechaIngreso(LocalDateTime.now());
@@ -115,11 +120,10 @@ public class TeamServiceImpl implements TeamService {
         Long usuarioId = userDetails.getUser().getId();
 
         MiembroEquipo invitacion = miembroEquipoRepository.findByUsuarioIdAndEquipoIdAndEstado(usuarioId, equipoId, EstadoMiembro.INVITADO_PENDIENTE)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró una invitación pendiente para este equipo."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró una invitación pendiente para este equipo para el usuario actual."));
 
         invitacion.setEstado(EstadoMiembro.RECHAZADO);
         invitacion.setFechaEstado(LocalDateTime.now());
-
         miembroEquipoRepository.save(invitacion);
     }
 
@@ -132,55 +136,6 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
-    public void expulsarMiembro(Long equipoId, Long usuarioId, Authentication authentication) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Long capitanId = userDetails.getUser().getId();
-
-        Team equipo = teamRepository.findById(equipoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
-
-        if (equipo.getCapitan() == null || !equipo.getCapitan().getId().equals(capitanId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para expulsar miembros de este equipo.");
-        }
-
-        MiembroEquipo membresia = miembroEquipoRepository.findByEquipoIdAndUsuarioId(equipoId, usuarioId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El miembro especificado no pertenece a este equipo."));
-
-        // No se puede expulsar al capitán
-        if (equipo.getCapitan().getId().equals(usuarioId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes expulsar al capitán del equipo.");
-        }
-
-        membresia.setEstado(EstadoMiembro.EXPULSADO);
-        membresia.setFechaEstado(LocalDateTime.now());
-        membresia.setFechaIngreso(null);
-
-        miembroEquipoRepository.save(membresia);
-    }
-
-    @Override
-    @Transactional
-    public TeamResponse updateTeam(Long equipoId, UpdateTeamRequest request, Authentication authentication) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Long capitanId = userDetails.getUser().getId();
-
-        Team equipo = teamRepository.findById(equipoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
-
-        if (equipo.getCapitan() == null || !equipo.getCapitan().getId().equals(capitanId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para editar este equipo.");
-        }
-
-        equipo.setNombre(request.getNombre());
-        equipo.setTipoDeporte(Deporte.valueOf(request.getTipoDeporte().toUpperCase()));
-
-        Team equipoActualizado = teamRepository.save(equipo);
-
-        return toResponse(equipoActualizado);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public List<TeamResponse> getMisEquipos(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -189,10 +144,12 @@ public class TeamServiceImpl implements TeamService {
         List<MiembroEquipo> relaciones = miembroEquipoRepository.findByUsuarioIdAndEstado(usuarioId, EstadoMiembro.ACEPTADO);
         List<MiembroEquipo> invitacionesPendientes = miembroEquipoRepository.findByUsuarioIdAndEstado(usuarioId, EstadoMiembro.INVITADO_PENDIENTE);
 
-        relaciones.addAll(invitacionesPendientes);
-
+        // Combinar ambas listas y convertir a DTOs, evitando duplicados si fuera el caso
         return relaciones.stream()
-                .map(relacion -> toResponse(relacion.getEquipo()))
+                .map(MiembroEquipo::getEquipo)
+                .collect(Collectors.toSet()) // Usar Set para eliminar duplicados de equipos
+                .stream()
+                .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 

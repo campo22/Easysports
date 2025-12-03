@@ -103,16 +103,4 @@ public class Match {
      */
     @Column(name = "jugadores_actuales", nullable = false)
     private Integer jugadoresActuales = 0;
-
-    /**
-     * Resultado del equipo local (usado cuando el partido ha finalizado).
-     */
-    @Column(name = "resultado_local")
-    private Integer resultadoLocal;
-
-    /**
-     * Resultado del equipo visitante (usado cuando el partido ha finalizado).
-     */
-    @Column(name = "resultado_visitante")
-    private Integer resultadoVisitante;
 }

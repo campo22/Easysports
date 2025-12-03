@@ -1,4 +1,4 @@
-# Lógica de la Aplicación: "Crear Encuentro" y "Unirse a Encuentro"
+# Lógica de la Aplicación: "Crear Encuentro", "Unirse a Encuentro" y Funcionalidades Adicionales
 
 ## 1. Crear Encuentro
 
@@ -120,11 +120,85 @@ Cuando un capitán quiere invitar a un usuario, la aplicación le pide:
 *   **Invitaciones y Control:** Proporciona un mecanismo para que los usuarios acepten activamente unirse a un equipo, en lugar de ser agregados directamente.
 *   **Visibilidad:** Permite a los usuarios ver en qué equipos están como miembros activos o con invitaciones pendientes.
 
+## 5. Expulsión de Miembros del Equipo
+
+### ¿Quién puede expulsar a un miembro de un equipo?
+Solo el capitán del equipo tiene permisos para expulsar a un miembro del equipo.
+
+### ¿Qué información se necesita para expulsar a un miembro?
+Para expulsar a un miembro, se necesita:
+*   **ID del Equipo:** El equipo del que se quiere expulsar al miembro.
+*   **ID del Usuario:** El usuario que será expulsado.
+
+### ¿Qué pasa cuando un capitán expulsa a un miembro?
+1.  **Autenticación y Autorización:** La aplicación verifica que el usuario que intenta expulsar esté logueado y sea efectivamente el **capitán** del equipo.
+2.  **Verificación de membresía:** Se verifica que el usuario que se va a expulsar efectivamente pertenezca al equipo.
+3.  **Restricción:** No se puede expulsar al capitán del equipo (verificación adicional).
+4.  **Actualizar Estado:** La aplicación encuentra la entrada correspondiente en la tabla `miembros_equipos` y **actualiza** su estado a `EXPULSADO`.
+5.  **Actualizar Fechas:** Se **actualiza** el campo `fecha_estado` con la fecha y hora actuales y se **anula** la fecha de ingreso.
+6.  **Respuesta:** Se devuelve un código de éxito (por ejemplo, 204 No Content).
+
+## 6. Edición de Perfil del Equipo
+
+### ¿Quién puede editar el perfil de un equipo?
+Solo el capitán del equipo tiene permisos para editar la información del equipo.
+
+### ¿Qué información se puede editar?
+Actualmente se pueden editar:
+*   **Nombre del Equipo:** El nuevo nombre con el que se identificará el equipo.
+*   **Deporte:** El deporte principal del equipo.
+
+### ¿Qué pasa cuando un capitán edita el equipo?
+1.  **Autenticación y Autorización:** La aplicación verifica que el usuario que intenta editar esté logueado y sea efectivamente el **capitán** del equipo.
+2.  **Validación de Datos:** Se validan los nuevos datos proporcionados (nombre no vacío, deporte válido).
+3.  **Actualizar Información:** Se actualiza la información del equipo en la base de datos.
+4.  **Respuesta:** Se devuelve un mensaje o JSON con la información actualizada del equipo.
+
+## 7. Registro de Resultados de Encuentro
+
+### ¿Quién puede registrar resultados de un encuentro?
+Solo el creador del encuentro puede registrar los resultados.
+
+### ¿Qué información se necesita para registrar resultados?
+Para registrar resultados, se necesita:
+*   **Código del Encuentro:** El código único del encuentro.
+*   **ID del Equipo Local:** El equipo local (en partidos formales).
+*   **ID del Equipo Visitante:** El equipo visitante (en partidos formales).
+*   **Resultado Local:** El número de puntos/goles anotados por el equipo local.
+*   **Resultado Visitante:** El número de puntos/goles anotados por el equipo visitante.
+
+### ¿Qué pasa cuando se registran los resultados?
+1.  **Autenticación:** La aplicación verifica que el usuario esté logueado y tenga permisos.
+2.  **Autorización:** Se verifica que el usuario sea el creador del encuentro.
+3.  **Validación de Equipos:** En partidos formales, se verifica que los IDs de los equipos coincidan con los del encuentro.
+4.  **Actualizar Resultados:** Se actualizan los campos de resultado en el encuentro y se cambia el estado a `FINALIZADO`.
+5.  **Respuesta:** Se devuelve un mensaje o JSON con la información actualizada del encuentro.
+
+## 8. Cancelación de Encuentro
+
+### ¿Quién puede cancelar un encuentro?
+Solo el creador del encuentro puede cancelarlo.
+
+### ¿Qué información se necesita para cancelar un encuentro?
+Para cancelar un encuentro, se necesita:
+*   **Código del Encuentro:** El código único del encuentro a cancelar.
+
+### ¿Qué pasa cuando se cancela un encuentro?
+1.  **Autenticación:** La aplicación verifica que el usuario esté logueado y tenga permisos.
+2.  **Autorización:** Se verifica que el usuario sea el creador del encuentro.
+3.  **Estado:** Se verifica que el encuentro no esté ya finalizado o cancelado.
+4.  **Actualizar Estado:** Se cambia el estado del encuentro a `CANCELADO`.
+5.  **Respuesta:** Se devuelve un mensaje o JSON con la información actualizada del encuentro.
+
 ## En resumen para explicar:
 
 *   **Crear Encuentro:** Un usuario logueado llena un formulario con los detalles del partido (tipo, deporte, fecha, lugar, cupos). La app verifica reglas (fecha, autorización para partidos formales) y crea un "evento" con un código único. Sirve para organizar partidos.
 *   **Unirse a Encuentro:** Un usuario logueado usa el **código** de un encuentro para "apuntarse". La app revisa si el partido está abierto y no lleno, y luego lo agrega a la lista de participantes, actualizando el contador. Permite a la gente encontrarse y jugar juntos.
 *   **Crear Equipo:** Un usuario logueado puede crear un equipo, del cual se convierte en capitán. Sirve para organizar partidos formales y tener una identidad de grupo.
 *   **Gestión de Miembros:** El capitán puede invitar a usuarios a su equipo. Los usuarios pueden aceptar o rechazar esas invitaciones. Los usuarios pueden ver sus equipos. Esto permite formar equipos de forma controlada.
+*   **Expulsión de Miembros:** El capitán puede expulsar a miembros de su equipo. El estado del miembro cambia a "expulsado".
+*   **Edición de Equipo:** El capitán puede actualizar la información de su equipo (nombre, deporte).
+*   **Registro de Resultados:** El creador del encuentro puede registrar los resultados finales del partido.
+*   **Cancelación de Encuentros:** El creador del encuentro puede cancelar un partido antes de que comience.
 
 Esta lógica permite una gestión ágil de partidos y equipos dentro de la aplicación.

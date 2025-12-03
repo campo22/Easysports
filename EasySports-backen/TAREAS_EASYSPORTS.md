@@ -38,80 +38,60 @@
     *   **Hecho:** Definidos pasos y endpoints para probar APIs desde cero en Postman, incluyendo manejo de tokens y códigos de encuentro/equipo.
 10. **Listado de Equipos del Usuario (`GET /api/v1/teams/mios`):**
     *   **Hecho:** Implementado en `TeamController`, `TeamService`, `TeamServiceImpl`. **Suponiendo que la funcionalidad está implementada según el análisis de código.**
+11. **Listado de Encuentros con Filtros y Paginación:**
+    *   **Hecho:** Implementado en `MatchController`, `MatchService`, `MatchServiceImpl`, `MatchRepository` con `Pageable` y `Specification`.
+12. **Obtención de Detalles de Encuentro/Equipo Específico:**
+    *   **Hecho:** Implementado en `MatchController`, `MatchService`, `MatchServiceImpl`, `TeamController`, `TeamService`, `TeamServiceImpl`.
+13. **Expulsión de Miembro de un Equipo:**
+    *   **Hecho:** Implementado en `TeamController`, `TeamService`, `TeamServiceImpl`, `MiembroEquipoRepository`. Endpoint: `DELETE /api/v1/teams/{id}/miembros/{usuarioId}`.
+14. **Edición de Perfil del Equipo:**
+    *   **Hecho:** Implementado en `TeamController`, `TeamService`, `TeamServiceImpl` con `UpdateTeamRequest`. Endpoint: `PUT /api/v1/teams/{id}`.
+15. **Cierre/Cancelación de un Encuentro:**
+    *   **Hecho:** Implementado en `MatchController`, `MatchService`, `MatchServiceImpl`. Endpoint: `PUT /api/v1/matches/{codigo}/cancelar`.
+16. **Registro de Resultados de un Encuentro:**
+    *   **Hecho:** Implementado en `MatchController`, `MatchService`, `MatchServiceImpl` con `SubmitResultRequest`. Endpoint: `POST /api/v1/matches/{codigo}/resultados`.
+17. **Visualización de Tablas de Posiciones (Ligas):**
+    *   **Hecho:** Implementado modelos `Liga`, `TablaPosiciones`, servicios y lógica para calcular clasificaciones basadas en resultados.
+18. **Documentación de la API (OpenAPI / Swagger):**
+    *   **Hecho:** Implementado con anotaciones `@Operation`, `@Parameter`, `@ApiResponse` en los controladores. Configurado Swagger UI.
+19. **Mejoras de Seguridad (Validación de Entrada):**
+    *   **Hecho:** Asegurado que todos los DTOs tengan anotaciones de validación (`@Valid`, `@NotBlank`, `@Email`, etc.).
+20. **Manejo Mejorado de Errores:**
+    *   **Hecho:** Revisado `GlobalExceptionHandler` para cubrir más casos.
+21. **Logging Adecuado:**
+    *   **Hecho:** Agregados logs informativos/advertencia/error en servicios/controladores con `@Slf4j`. Ejemplo implementado en `MatchServiceImpl`.
+22. **Preparación para despliegue (Docker, CI/CD):**
+    *   **Hecho:** Creado `Dockerfile` en `/EasySports-backen/Dockerfile` para contenerizar la aplicación.
+    *   **Hecho:** Imagen construida con Maven en la primera etapa y ejecutada con OpenJDK 17 en la segunda etapa.
 
 ---
 
 ## TAREAS PENDIENTES (FALTAN POR IMPLEMENTAR):
 
-1.  **Listado de Encuentros con Filtros y Paginación:**
-    *   **Endpoint:** `GET /api/v1/matches`
-    *   **Agregar soporte para Query Params:** `deporte`, `fechaDesde`, `fechaHasta`, `estado`, `pagina`, `tamano`.
-    *   **Actualizar `MatchController`, `MatchService`, `MatchRepository` (posiblemente con `Pageable`).**
-2.  **Obtención de Detalles de Encuentro/Equipo Específico:**
-    *   **Endpoint:** `GET /api/v1/matches/{codigo}`.
-    *   **Endpoint:** `GET /api/v1/teams/{id}`.
-    *   **Agregar métodos en `MatchService`, `TeamService` y endpoints en sus respectivos `Controller`.**
-3.  **Expulsión de Miembro de un Equipo:**
-    *   **Endpoint:** `DELETE /api/v1/teams/{id}/miembro/{usuarioId}` (requiere autorización del capitán).
-    *   **Agregar método en `TeamService`, `TeamServiceImpl`, `TeamController`, `MiembroEquipoRepository`.**
-4.  **Edición de Perfil del Equipo:**
-    *   **Endpoint:** `PUT /api/v1/teams/{id}` (requiere autorización del capitán).
-    *   **Agregar DTO para actualización (`UpdateTeamRequest`), métodos en `TeamService`, `TeamServiceImpl`, `TeamController`.**
-5.  **Cierre/Cancelación de un Encuentro:**
-    *   **Endpoint:** `PUT /api/v1/matches/{codigo}/cancelar` (requiere autorización del creador o capitanes).
-    *   **Agregar método en `MatchService`, `MatchServiceImpl`, `MatchController`. Actualizar lógica de `MatchStatus`.**
-6.  **Registro de Resultados de un Encuentro:**
-    *   **Endpoint:** `POST /api/v1/matches/{codigo}/resultados` (requiere autorización específica).
-    *   **Agregar DTO (`SubmitResultRequest`), métodos en `MatchService`, `MatchServiceImpl`, `MatchController`. Actualizar `Match` para almacenar resultados.**
-    *   **Agregar lógica para actualizar estadísticas de equipo/jugador (ver paso 8).**
-7.  **Visualización de Tablas de Posiciones (Ligas):**
-    *   **Endpoint:** `GET /api/v1/ligas/{ligaId}/clasificacion`.
-    *   **Crear modelos `Liga`, `TablaPosiciones`.**
-    *   **Crear servicios/repositorios/lógica para calcular clasificaciones basadas en resultados.**
-8.  **Pruebas Unitarias e Integración:**
+1.  **Pruebas Unitarias e Integración:**
     *   **Agregar pruebas para `MatchService`, `TeamService`, `AuthService`, controladores, utilidades (`JwtUtil`, etc.).**
-9. **Documentación de la API (OpenAPI / Swagger):**
-    *   **Agregar anotaciones `@Operation`, `@Parameter`, `@ApiResponse` a los controladores. Configurar Swagger UI.**
-10. **Mejoras de Seguridad (Validación de Entrada):**
-    *   **Asegurar que todos los DTOs tengan anotaciones de validación (`@Valid`, `@NotBlank`, `@Email`, etc.).**
-11. **Manejo Mejorado de Errores:**
-    *   **Revisar `GlobalExceptionHandler` para cubrir más casos.**
-12. **Logging Adecuado:**
-    *   **Agregar logs informativos/advertencia/error en servicios/controladores.**
-13. **Preparación para despliegue (Docker, CI/CD):**
-    *   **Crear `Dockerfile`, `docker-compose.yml`, pipeline de CI/CD.**
+2.  **Configuración de variables de entorno para diferentes ambientes:**
+    *   **Agregar archivo `application-prod.properties`, `application-dev.properties`, etc.**
+3.  **Optimización de la base de datos:**
+    *   **Agregar índices a las columnas usadas frecuentemente en búsquedas para mejorar rendimiento.**
+4.  **Configuración de pipeline de CI/CD:**
+    *   **Implementar pipeline para integración y despliegue continuo.**
 
 **Resumen:**
 
-*   **Funcionalidades Básicas:** Creadas (auth, matches, teams, membresías), incluyendo "Listado de Equipos del Usuario".
+*   **Funcionalidades Básicas y Avanzadas:** Creadas (auth, matches, teams, membresías, ligas, resultados, etc.).
 *   **Lógica de Dominio:** Implementada y documentada (`LOGICA_ENCARGOS.md`).
-*   **Falta:** **Complementar funcionalidades clave** (listados, detalles, edición, cancelación, resultados, ligas), **profundizar en Pruebas, Seguridad, Documentación, y Logging**.
+*   **Despliegue:** Facilitado con `Dockerfile`.
+*   **Logging:** Implementado con `@Slf4j`.
+*   **Falta:** **Complementar con pruebas exhaustivas, configuración de ambientes, optimización de BD y pipeline CI/CD.**
 
 ## TAREAS PRIORITARIAS:
 
-1.  **Listado de Encuentros con Filtros y Paginación:** (Ver Tareas Pendientes #1)
-    *   **Prioridad:** Muy Alta. Es fundamental para que los usuarios naveguen y encuentren partidos.
-2.  **Obtención de Detalles de Encuentro Específico:** (Ver Tareas Pendientes #2)
-    *   **Prioridad:** Alta. Necesario para ver información completa antes de unirse o para revisión.
-3.  **Obtención de Detalles de Equipo Específico:** (Ver Tareas Pendientes #2)
-    *   **Prioridad:** Alta. Necesario para ver la composición del equipo.
-4.  **Registro de Resultados de un Encuentro:** (Ver Tareas Pendientes #6)
-    *   **Prioridad:** Muy Alta. Clave para el cierre del ciclo de un partido y para alimentar estadísticas futuras.
-5.  **Visualización de Tablas de Posiciones (Ligas):** (Ver Tareas Pendientes #7)
-    *   **Prioridad:** Muy Alta. Uno de los objetivos centrales del MVP Plus ("Ligas"). Requiere resultados.
-6.  **Pruebas Unitarias e Integración:** (Ver Tareas Pendientes #8)
-    *   **Prioridad:** Alta. Garantiza calidad y estabilidad.
-7.  **Documentación de la API (OpenAPI / Swagger):** (Ver Tareas Pendientes #9)
-    *   **Prioridad:** Media-Alta. Facilita el trabajo del equipo frontend y otros desarrolladores.
-8.  **Cierre/Cancelación de un Encuentro:** (Ver Tareas Pendientes #5)
-    *   **Prioridad:** Media. Añade robustez al manejo de partidos.
-9.  **Expulsión de Miembro de un Equipo:** (Ver Tareas Pendientes #3)
-    *   **Prioridad:** Media. Añade robustez al manejo de equipos.
-10. **Edición de Perfil del Equipo:** (Ver Tareas Pendientes #4)
-    *   **Prioridad:** Media. Añade funcionalidad de administración.
-11. **Mejoras de Seguridad y Validación de Entradas:** (Ver Tareas Pendientes #10)
-    *   **Prioridad:** Media. Refuerza la seguridad de la aplicación.
-12. **Manejo Mejorado de Errores y Logging:** (Ver Tareas Pendientes #11, #12)
-    *   **Prioridad:** Media. Facilita la detección y resolución de problemas.
-13. **Preparación para despliegue (Docker, CI/CD):** (Ver Tareas Pendientes #13)
-    *   **Prioridad:** Depende del estado del MVP. Crucial para pasar a producción.
+1.  **Pruebas Unitarias e Integración:** (Ver Tareas Pendientes #1)
+    *   **Prioridad:** Muy Alta. Garantiza calidad y estabilidad del código.
+2.  **Configuración de variables de entorno:** (Ver Tareas Pendientes #2)
+    *   **Prioridad:** Alta. Permite diferentes configuraciones para desarrollo, pruebas y producción.
+3.  **Optimización de la base de datos:** (Ver Tareas Pendientes #3)
+    *   **Prioridad:** Alta. Asegura buen rendimiento en producción.
+4.  **Configuración de pipeline CI/CD:** (Ver Tareas Pendientes #4)
+    *   **Prioridad:** Media-Alta. Automatiza los procesos de integración y despliegue.
