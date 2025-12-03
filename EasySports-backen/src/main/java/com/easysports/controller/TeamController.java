@@ -3,6 +3,7 @@ package com.easysports.controller;
 import com.easysports.dto.team.CreateTeamRequest;
 import com.easysports.dto.team.InvitarMiembroRequest;
 import com.easysports.dto.team.TeamResponse;
+import com.easysports.dto.team.UpdateTeamRequest;
 import com.easysports.service.TeamService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -112,5 +113,37 @@ public class TeamController {
     public ResponseEntity<TeamResponse> findTeamById(@PathVariable Long id) {
         TeamResponse response = teamService.findById(id);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Expulsa a un miembro de un equipo.
+     * Solo el capitán del equipo puede expulsar miembros.
+     *
+     * @param equipoId ID del equipo del que se expulsará al miembro.
+     * @param usuarioId ID del usuario que será expulsado.
+     * @param authentication Contexto de autenticación del capitán.
+     * @return ResponseEntity con estado HTTP 204 (No Content) si la expulsión es exitosa.
+     */
+    @DeleteMapping("/{equipoId}/miembro/{usuarioId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> expulsarMiembro(@PathVariable Long equipoId, @PathVariable Long usuarioId, Authentication authentication) {
+        teamService.expulsarMiembro(equipoId, usuarioId, authentication);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Actualiza el perfil de un equipo.
+     * Solo el capitán del equipo puede realizar esta acción.
+     *
+     * @param equipoId ID del equipo a actualizar.
+     * @param request DTO con la nueva información del equipo.
+     * @param authentication Contexto de autenticación del capitán.
+     * @return ResponseEntity con la información del equipo actualizada y estado HTTP 200.
+     */
+    @PutMapping("/{equipoId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<TeamResponse> updateTeam(@PathVariable Long equipoId, @Valid @RequestBody UpdateTeamRequest request, Authentication authentication) {
+        TeamResponse updatedTeam = teamService.updateTeam(equipoId, request, authentication);
+        return ResponseEntity.ok(updatedTeam);
     }
 }

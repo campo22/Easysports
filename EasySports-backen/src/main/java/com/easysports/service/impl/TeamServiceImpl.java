@@ -153,6 +153,56 @@ public class TeamServiceImpl implements TeamService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public void expulsarMiembro(Long equipoId, Long usuarioId, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Long capitanId = userDetails.getUser().getId();
+
+        Team equipo = teamRepository.findById(equipoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
+
+        if (!Objects.equals(equipo.getCapitan().getId(), capitanId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para expulsar miembros de este equipo.");
+        }
+
+        MiembroEquipo membresia = miembroEquipoRepository.findByEquipoIdAndUsuarioId(equipoId, usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La relación miembro-equipo no existe."));
+
+        // No se puede expulsar al capitán del equipo
+        if (Objects.equals(equipo.getCapitan().getId(), usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede expulsar al capitán del equipo.");
+        }
+
+        // Cambiamos el estado a EXPULSADO
+        membresia.setEstado(EstadoMiembro.EXPULSADO);
+        membresia.setFechaEstado(LocalDateTime.now());
+        membresia.setFechaIngreso(null);
+
+        miembroEquipoRepository.save(membresia);
+    }
+
+    @Override
+    @Transactional
+    public TeamResponse updateTeam(Long equipoId, com.easysports.dto.team.UpdateTeamRequest request, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Long capitanId = userDetails.getUser().getId();
+
+        Team equipo = teamRepository.findById(equipoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
+
+        if (!Objects.equals(equipo.getCapitan().getId(), capitanId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para editar este equipo.");
+        }
+
+        equipo.setNombre(request.getNombre());
+        equipo.setTipoDeporte(request.getTipoDeporte());
+
+        Team equipoActualizado = teamRepository.save(equipo);
+
+        return toResponse(equipoActualizado);
+    }
+
     private TeamResponse toResponse(Team team) {
         return TeamResponse.builder()
                 .id(team.getId())

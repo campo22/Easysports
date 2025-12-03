@@ -62,4 +62,25 @@ public interface TeamService {
      * @return Lista de DTOs con la información de los equipos.
      */
     List<TeamResponse> getMisEquipos(Authentication authentication);
+
+    /**
+     * Expulsa a un miembro de un equipo.
+     * Solo el capitán del equipo puede expulsar miembros.
+     *
+     * @param equipoId ID del equipo del que se expulsará al miembro.
+     * @param usuarioId ID del usuario que será expulsado.
+     * @param authentication Contexto de autenticación del capitán.
+     */
+    void expulsarMiembro(Long equipoId, Long usuarioId, Authentication authentication);
+
+    /**
+     * Actualiza el perfil de un equipo.
+     * Solo el capitán del equipo puede realizar esta acción.
+     *
+     * @param equipoId ID del equipo a actualizar.
+     * @param request DTO con la nueva información del equipo.
+     * @param authentication Contexto de autenticación del capitán.
+     * @return DTO con la información del equipo actualizada.
+     */
+    TeamResponse updateTeam(Long equipoId, com.easysports.dto.team.UpdateTeamRequest request, Authentication authentication);
 }
