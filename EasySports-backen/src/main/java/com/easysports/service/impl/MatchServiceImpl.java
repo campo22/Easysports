@@ -2,31 +2,36 @@ package com.easysports.service.impl;
 
 import com.easysports.dto.match.MatchRequest;
 import com.easysports.dto.match.MatchResponse;
+import com.easysports.enums.Deporte;
 import com.easysports.enums.MatchStatus;
 import com.easysports.enums.MatchType;
 import com.easysports.model.Court;
 import com.easysports.model.Match;
-import com.easysports.model.Participant; // Importar
+import com.easysports.model.Participant;
 import com.easysports.model.Team;
 import com.easysports.model.User;
 import com.easysports.repository.CourtRepository;
 import com.easysports.repository.MatchRepository;
-import com.easysports.repository.ParticipantRepository; // Importar
+import com.easysports.repository.ParticipantRepository;
 import com.easysports.repository.TeamRepository;
 import com.easysports.repository.UserRepository;
 import com.easysports.security.UserDetailsImpl;
 import com.easysports.service.MatchService;
-import lombok.RequiredArgsConstructor; // Importar
-import org.springframework.dao.DataIntegrityViolationException; // Importar
+import com.easysports.service.specification.MatchSpecification;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Importar
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.Random; // Importar
+import java.util.Random;
 
 /**
  * Implementación del servicio de lógica de negocio para la gestión de encuentros deportivos.
@@ -40,6 +45,7 @@ public class MatchServiceImpl implements MatchService {
     private final TeamRepository teamRepository;
     private final CourtRepository courtRepository;
     private final ParticipantRepository participantRepository;
+    private final MatchSpecification matchSpecification;
 
     // Código alfanumérico
     private static final String ALPHANUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -48,12 +54,6 @@ public class MatchServiceImpl implements MatchService {
     // Generador de números aleatorios
     private final Random random = new Random();
 
-    /**
-     * Crear un encuentro (con todas las validaciones de negocio).
-     * @param request DTO de creación
-     * @param authentication contexto de seguridad
-     * @return MatchResponse con el encuentro creado
-     */
     @Override
     @Transactional
     public MatchResponse createMatch(MatchRequest request, Authentication authentication) {
@@ -132,7 +132,6 @@ public class MatchServiceImpl implements MatchService {
         do {
             codigo = generateMatchCode();
             attempts++;
-            // En teoría matchRepository.findByCodigo(...) es suficiente; para robustez, limitamos intentos
             if (attempts > 5) break;
         } while (matchRepository.findByCodigo(codigo).isPresent());
 
@@ -154,7 +153,6 @@ public class MatchServiceImpl implements MatchService {
         try {
             matchRepository.save(match);
         } catch (DataIntegrityViolationException ex) {
-            // reintentar generar otro código y guardar una vez más (último intento)
             match.setCodigo(generateMatchCode());
             matchRepository.save(match);
         }
@@ -171,12 +169,6 @@ public class MatchServiceImpl implements MatchService {
         return toResponse(match);
     }
 
-    /**
-     * Unirse a un encuentro ya existente por código.
-     * @param codigo código del encuentro
-     * @param authentication contexto de seguridad
-     * @return MatchResponse actualizado
-     */
     @Override
     @Transactional
     public MatchResponse joinMatch(String codigo, Authentication authentication) {
@@ -196,18 +188,15 @@ public class MatchServiceImpl implements MatchService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El encuentro está lleno.");
         }
 
-        // Verificar si ya está inscrito (tabla pivote)
         boolean yaParticipa = participantRepository.existsByMatchAndUser(match, usuario);
         if (yaParticipa) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya estás inscrito en este encuentro.");
         }
 
-        // El creador no puede unirse como participante adicional (ya está registrado)
         if (match.getCreador() != null && Objects.equals(match.getCreador().getId(), usuario.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El creador del encuentro ya está participando.");
         }
 
-        // Registrar participante
         Participant participant = Participant.builder()
                 .match(match)
                 .user(usuario)
@@ -215,9 +204,7 @@ public class MatchServiceImpl implements MatchService {
                 .build();
         participantRepository.save(participant);
 
-        // Actualizar contador de jugadores
         match.setJugadoresActuales(match.getJugadoresActuales() + 1);
-        // Si alcanzó max, marcar LLENO
         if (match.getJugadoresActuales() >= match.getMaxJugadores()) {
             match.setEstado(MatchStatus.LLENO);
         }
@@ -226,7 +213,21 @@ public class MatchServiceImpl implements MatchService {
         return toResponse(match);
     }
 
-    /* --------------------- Helpers --------------------- */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MatchResponse> findAll(Deporte deporte, MatchStatus estado, LocalDateTime fechaDesde, LocalDateTime fechaHasta, Pageable pageable) {
+        Specification<Match> spec = matchSpecification.findByCriteria(deporte, estado, fechaDesde, fechaHasta);
+        Page<Match> matches = matchRepository.findAll(spec, pageable);
+        return matches.map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MatchResponse findByCodigo(String codigo) {
+        return matchRepository.findByCodigo(codigo)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuentro no encontrado con el código: " + codigo));
+    }
 
     private MatchResponse toResponse(Match match) {
         return MatchResponse.builder()

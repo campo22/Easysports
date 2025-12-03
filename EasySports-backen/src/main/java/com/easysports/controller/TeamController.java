@@ -99,4 +99,18 @@ public class TeamController {
         List<TeamResponse> equipos = teamService.getMisEquipos(authentication);
         return ResponseEntity.ok(equipos);
     }
+
+    /**
+     * Busca un equipo por su ID único y devuelve sus detalles.
+     * Solo usuarios autenticados pueden acceder.
+     *
+     * @param id El ID único del equipo.
+     * @return ResponseEntity con los detalles del equipo y estado HTTP 200.
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<TeamResponse> findTeamById(@PathVariable Long id) {
+        TeamResponse response = teamService.findById(id);
+        return ResponseEntity.ok(response);
+    }
 }

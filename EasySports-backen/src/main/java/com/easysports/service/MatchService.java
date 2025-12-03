@@ -2,8 +2,13 @@ package com.easysports.service;
 
 import com.easysports.dto.match.MatchRequest;
 import com.easysports.dto.match.MatchResponse;
-import com.easysports.dto.match.JoinMatchRequest; // Importar el nuevo DTO
-import org.springframework.security.core.Authentication; // Importar Authentication
+import com.easysports.enums.Deporte;
+import com.easysports.enums.MatchStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+
+import java.time.LocalDateTime;
 
 /**
  * Interfaz para el servicio de gestión de encuentros (partidos).
@@ -18,7 +23,7 @@ public interface MatchService {
      * @param authentication Contexto de autenticación del usuario.
      * @return DTO con la información del encuentro creado.
      */
-    MatchResponse createMatch(MatchRequest request, Authentication authentication); // Añadir Authentication
+    MatchResponse createMatch(MatchRequest request, Authentication authentication);
 
     /**
      * Permite a un usuario autenticado unirse a un encuentro.
@@ -27,5 +32,25 @@ public interface MatchService {
      * @param authentication Contexto de autenticación del usuario.
      * @return DTO con la información del encuentro actualizado.
      */
-    MatchResponse joinMatch(String codigo, Authentication authentication); // Nuevo método
+    MatchResponse joinMatch(String codigo, Authentication authentication);
+
+    /**
+     * Busca y devuelve una lista paginada de encuentros aplicando criterios de filtro.
+     *
+     * @param deporte Filtro por deporte (opcional).
+     * @param estado Filtro por estado del encuentro (opcional).
+     * @param fechaDesde Filtro por fecha de inicio (opcional).
+     * @param fechaHasta Filtro por fecha de fin (opcional).
+     * @param pageable Objeto con la información de paginación y ordenamiento.
+     * @return Una página de DTOs con la información de los encuentros encontrados.
+     */
+    Page<MatchResponse> findAll(Deporte deporte, MatchStatus estado, LocalDateTime fechaDesde, LocalDateTime fechaHasta, Pageable pageable);
+
+    /**
+     * Busca un encuentro por su código único y devuelve sus detalles.
+     *
+     * @param codigo El código único del encuentro.
+     * @return DTO con la información del encuentro.
+     */
+    MatchResponse findByCodigo(String codigo);
 }

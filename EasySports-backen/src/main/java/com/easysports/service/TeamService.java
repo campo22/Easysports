@@ -1,11 +1,11 @@
 package com.easysports.service;
 
 import com.easysports.dto.team.CreateTeamRequest;
-import com.easysports.dto.team.InvitarMiembroRequest; // Importar
+import com.easysports.dto.team.InvitarMiembroRequest;
 import com.easysports.dto.team.TeamResponse;
 import org.springframework.security.core.Authentication;
 
-import java.util.List; // Importar para getMisEquipos
+import java.util.List;
 
 /**
  * Interfaz para el servicio de gestión de equipos.
@@ -56,4 +56,12 @@ public interface TeamService {
      * @return Lista de equipos del usuario.
      */
     List<TeamResponse> getMisEquipos(Authentication authentication);
+
+    /**
+     * Busca un equipo por su ID y devuelve sus detalles.
+     *
+     * @param id El ID único del equipo.
+     * @return DTO con la información del equipo.
+     */
+    TeamResponse findById(Long id);
 }

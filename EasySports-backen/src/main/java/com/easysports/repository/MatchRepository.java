@@ -3,6 +3,7 @@ package com.easysports.repository;
 import com.easysports.model.Court;
 import com.easysports.model.Match;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ import java.util.Optional;
  * Repositorio para la gestión de datos de la entidad Match (Encuentro).
  */
 @Repository
-public interface MatchRepository extends JpaRepository<Match, Long> {
+public interface MatchRepository extends JpaRepository<Match, Long>, JpaSpecificationExecutor<Match> {
 
     /**
      * Busca un encuentro por su código único.

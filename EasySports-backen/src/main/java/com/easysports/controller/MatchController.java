@@ -2,14 +2,20 @@ package com.easysports.controller;
 
 import com.easysports.dto.match.MatchRequest;
 import com.easysports.dto.match.MatchResponse;
-import com.easysports.dto.match.JoinMatchRequest; // Importar el nuevo DTO
+import com.easysports.enums.Deporte;
+import com.easysports.enums.MatchStatus;
 import com.easysports.service.MatchService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication; // Importar Authentication
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 /**
  * Controlador REST para la gestión de encuentros (partidos).
@@ -27,6 +33,44 @@ public class MatchController {
      */
     public MatchController(MatchService matchService) {
         this.matchService = matchService;
+    }
+
+    /**
+     * Busca y devuelve una lista paginada de encuentros aplicando criterios de filtro.
+     * Solo usuarios autenticados pueden acceder.
+     *
+     * @param deporte Filtro por deporte (ej: "FUTBOL").
+     * @param estado Filtro por estado del encuentro (ej: "ABIERTO").
+     * @param fechaDesde Filtro por fecha de inicio (formato ISO: "2025-12-01T10:00:00").
+     * @param fechaHasta Filtro por fecha de fin (formato ISO: "2025-12-31T23:59:59").
+     * @param pageable Objeto de paginación y ordenamiento (ej: "?page=0&size=10&sort=fechaProgramada,desc").
+     * @return ResponseEntity con una página de encuentros y estado HTTP 200.
+     */
+    @GetMapping
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<MatchResponse>> findAllMatches(
+            @RequestParam(required = false) Deporte deporte,
+            @RequestParam(required = false) MatchStatus estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHasta,
+            Pageable pageable) {
+
+        Page<MatchResponse> matches = matchService.findAll(deporte, estado, fechaDesde, fechaHasta, pageable);
+        return ResponseEntity.ok(matches);
+    }
+
+    /**
+     * Busca un encuentro por su código único y devuelve sus detalles.
+     * Solo usuarios autenticados pueden acceder.
+     *
+     * @param codigo El código único del encuentro.
+     * @return ResponseEntity con los detalles del encuentro y estado HTTP 200.
+     */
+    @GetMapping("/{codigo}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<MatchResponse> findMatchByCodigo(@PathVariable String codigo) {
+        MatchResponse response = matchService.findByCodigo(codigo);
+        return ResponseEntity.ok(response);
     }
 
     /**
