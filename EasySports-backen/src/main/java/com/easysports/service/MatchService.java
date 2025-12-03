@@ -53,4 +53,23 @@ public interface MatchService {
      * @return DTO con la información del encuentro.
      */
     MatchResponse findByCodigo(String codigo);
+
+    /**
+     * Registra el resultado de un encuentro.
+     *
+     * @param codigo El código único del encuentro.
+     * @param request DTO con los datos del resultado.
+     * @param authentication Contexto de autenticación del usuario.
+     * @return DTO con la información actualizada del encuentro.
+     */
+    MatchResponse submitResult(String codigo, com.easysports.dto.match.SubmitResultRequest request, Authentication authentication);
+
+    /**
+     * Cancela un encuentro.
+     *
+     * @param codigo El código único del encuentro.
+     * @param authentication Contexto de autenticación del usuario.
+     * @return DTO con la información actualizada del encuentro.
+     */
+    MatchResponse cancelMatch(String codigo, Authentication authentication);
 }

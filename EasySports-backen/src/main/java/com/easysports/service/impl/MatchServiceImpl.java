@@ -229,6 +229,72 @@ public class MatchServiceImpl implements MatchService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuentro no encontrado con el código: " + codigo));
     }
 
+    @Override
+    @Transactional
+    public MatchResponse submitResult(String codigo, com.easysports.dto.match.SubmitResultRequest request, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Long usuarioId = userDetails.getUser().getId();
+        User usuario = userRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado."));
+
+        Match match = matchRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuentro no encontrado."));
+
+        // Solo el creador del encuentro puede registrar resultados
+        if (match.getCreador() == null || !Objects.equals(match.getCreador().getId(), usuario.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el creador del encuentro puede registrar resultados.");
+        }
+
+        // Verificar que los IDs de los equipos coincidan con los del partido (si es formal)
+        if (match.getTipo() == MatchType.FORMAL) {
+            if (match.getEquipoLocal() == null || !Objects.equals(match.getEquipoLocal().getId(), request.getEquipoLocalId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo local no coincide con el del encuentro.");
+            }
+
+            if (match.getEquipoVisitante() != null && !Objects.equals(match.getEquipoVisitante().getId(), request.getEquipoVisitanteId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo visitante no coincide con el del encuentro.");
+            }
+        }
+
+        // Actualizar los resultados en el partido
+        match.setResultadoLocal(request.getResultadoLocal());
+        match.setResultadoVisitante(request.getResultadoVisitante());
+        match.setEstado(MatchStatus.FINALIZADO);
+
+        matchRepository.save(match);
+
+        return toResponse(match);
+    }
+
+    @Override
+    @Transactional
+    public MatchResponse cancelMatch(String codigo, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Long usuarioId = userDetails.getUser().getId();
+        User usuario = userRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado."));
+
+        Match match = matchRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuentro no encontrado."));
+
+        // Solo el creador del encuentro puede cancelarlo
+        if (match.getCreador() == null || !Objects.equals(match.getCreador().getId(), usuario.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el creador del encuentro puede cancelarlo.");
+        }
+
+        // Verificar que el estado permita la cancelación
+        if (match.getEstado() == MatchStatus.FINALIZADO || match.getEstado() == MatchStatus.CANCELADO) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cancelar un encuentro que ya ha finalizado o está cancelado.");
+        }
+
+        // Actualizar el estado del partido
+        match.setEstado(MatchStatus.CANCELADO);
+
+        matchRepository.save(match);
+
+        return toResponse(match);
+    }
+
     /* --------------------- Helpers --------------------- */
 
     private MatchResponse toResponse(Match match) {
@@ -246,6 +312,8 @@ public class MatchServiceImpl implements MatchService {
                 .equipoVisitanteId(match.getEquipoVisitante() != null ? match.getEquipoVisitante().getId() : null)
                 .maxJugadores(match.getMaxJugadores())
                 .jugadoresActuales(match.getJugadoresActuales())
+                .resultadoLocal(match.getResultadoLocal())
+                .resultadoVisitante(match.getResultadoVisitante())
                 .build();
     }
 

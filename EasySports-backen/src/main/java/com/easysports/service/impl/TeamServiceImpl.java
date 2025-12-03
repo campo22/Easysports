@@ -133,43 +133,51 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional
-    public void kickMember(Long teamId, Long memberId, Authentication authentication) {
+    public void expulsarMiembro(Long equipoId, Long usuarioId, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Long captainId = userDetails.getUser().getId();
+        Long capitanId = userDetails.getUser().getId();
 
-        Team team = teamRepository.findById(teamId)
+        Team equipo = teamRepository.findById(equipoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
 
-        // ... authorization and validation ...
+        if (equipo.getCapitan() == null || !equipo.getCapitan().getId().equals(capitanId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para expulsar miembros de este equipo.");
+        }
 
-        MiembroEquipo membership = miembroEquipoRepository.findByEquipoIdAndUsuarioId(teamId, memberId)
+        MiembroEquipo membresia = miembroEquipoRepository.findByEquipoIdAndUsuarioId(equipoId, usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El miembro especificado no pertenece a este equipo."));
-        
-        membership.setEstado(EstadoMiembro.EXPULSADO);
-        membership.setFechaEstado(LocalDateTime.now());
-        membership.setFechaIngreso(null);
 
-        miembroEquipoRepository.save(membership);
+        // No se puede expulsar al capitán
+        if (equipo.getCapitan().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes expulsar al capitán del equipo.");
+        }
+
+        membresia.setEstado(EstadoMiembro.EXPULSADO);
+        membresia.setFechaEstado(LocalDateTime.now());
+        membresia.setFechaIngreso(null);
+
+        miembroEquipoRepository.save(membresia);
     }
 
     @Override
     @Transactional
-    public TeamResponse updateTeam(Long teamId, UpdateTeamRequest request, Authentication authentication) {
+    public TeamResponse updateTeam(Long equipoId, UpdateTeamRequest request, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Long captainId = userDetails.getUser().getId();
+        Long capitanId = userDetails.getUser().getId();
 
-        Team team = teamRepository.findById(teamId)
+        Team equipo = teamRepository.findById(equipoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado."));
 
-        if (team.getCapitan() == null || !team.getCapitan().getId().equals(captainId)) {
+        if (equipo.getCapitan() == null || !equipo.getCapitan().getId().equals(capitanId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes autorización para editar este equipo.");
         }
 
-        String oldName = team.getNombre();
-        team.setNombre(request.getNombre());
-        Team updatedTeam = teamRepository.save(team);
+        equipo.setNombre(request.getNombre());
+        equipo.setTipoDeporte(Deporte.valueOf(request.getTipoDeporte().toUpperCase()));
 
-        return toResponse(updatedTeam);
+        Team equipoActualizado = teamRepository.save(equipo);
+
+        return toResponse(equipoActualizado);
     }
 
     @Override

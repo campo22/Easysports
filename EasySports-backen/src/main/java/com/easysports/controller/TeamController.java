@@ -83,10 +83,10 @@ public class TeamController {
             @ApiResponse(responseCode = "403", description = "No autorizado"),
             @ApiResponse(responseCode = "404", description = "Equipo no encontrado")
     })
-    @PutMapping("/{teamId}")
+    @PutMapping("/{equipoId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TeamResponse> updateTeam(@Parameter(description = "ID del equipo a actualizar") @PathVariable Long teamId, @Valid @RequestBody UpdateTeamRequest request, Authentication authentication) {
-        TeamResponse updatedTeam = teamService.updateTeam(teamId, request, authentication);
+    public ResponseEntity<TeamResponse> updateTeam(@Parameter(description = "ID del equipo a actualizar") @PathVariable Long equipoId, @Valid @RequestBody UpdateTeamRequest request, Authentication authentication) {
+        TeamResponse updatedTeam = teamService.updateTeam(equipoId, request, authentication);
         return ResponseEntity.ok(updatedTeam);
     }
 
@@ -137,10 +137,10 @@ public class TeamController {
             @ApiResponse(responseCode = "403", description = "No autorizado"),
             @ApiResponse(responseCode = "404", description = "Equipo o miembro no encontrado")
     })
-    @DeleteMapping("/{teamId}/miembros/{memberId}")
+    @DeleteMapping("/{equipoId}/miembros/{usuarioId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> kickMember(@Parameter(description = "ID del equipo") @PathVariable Long teamId, @Parameter(description = "ID del miembro a expulsar") @PathVariable Long memberId, Authentication authentication) {
-        teamService.kickMember(teamId, memberId, authentication);
+    public ResponseEntity<Void> expulsarMiembro(@Parameter(description = "ID del equipo") @PathVariable Long equipoId, @Parameter(description = "ID del miembro a expulsar") @PathVariable Long usuarioId, Authentication authentication) {
+        teamService.expulsarMiembro(equipoId, usuarioId, authentication);
         return ResponseEntity.noContent().build();
     }
 }
