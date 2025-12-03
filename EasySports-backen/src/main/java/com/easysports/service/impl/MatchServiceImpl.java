@@ -229,6 +229,8 @@ public class MatchServiceImpl implements MatchService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuentro no encontrado con el código: " + codigo));
     }
 
+    /* --------------------- Helpers --------------------- */
+
     private MatchResponse toResponse(Match match) {
         return MatchResponse.builder()
                 .id(match.getId())

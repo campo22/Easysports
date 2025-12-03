@@ -2,6 +2,7 @@ package com.easysports.dto.match;
 
 import com.easysports.enums.Deporte;
 import com.easysports.enums.MatchType;
+import com.easysports.validation.CanchaValidation;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
  * DTO para la solicitud de creación de un nuevo encuentro (partido).
  */
 @Data
+@CanchaValidation
 public class MatchRequest {
 
     /**
@@ -64,4 +66,10 @@ public class MatchRequest {
     @NotNull(message = "El número máximo de jugadores no puede ser nulo")
     @Min(value = 2, message = "Un encuentro debe tener al menos 2 jugadores")
     private Integer maxJugadores;
+
+    /**
+     * ID de la liga a la que pertenece este encuentro (opcional).
+     * Requerido si el encuentro es de tipo FORMAL y es un partido de liga.
+     */
+    private Long ligaId;
 }

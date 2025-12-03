@@ -2,19 +2,21 @@ package com.easysports.service.impl;
 
 import com.easysports.dto.auth.LoginRequest;
 import com.easysports.dto.auth.RegisterRequest;
-import com.easysports.dto.user.UpdateUserRequest; // Importar el nuevo DTO
+import com.easysports.dto.user.UpdateUserRequest;
 import com.easysports.enums.Sexo;
 import com.easysports.model.User;
 import com.easysports.repository.UserRepository;
 import com.easysports.security.UserDetailsImpl;
 import com.easysports.service.AuthService;
 import com.easysports.util.JwtUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication; // Importar Authentication
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 
@@ -66,10 +68,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
-
-        // Generar token JWT para el usuario recién registrado
-        UserDetailsImpl userDetails = new UserDetailsImpl(user);
-        return jwtUtil.generateToken(userDetails);
+        
+        return jwtUtil.generateToken(new UserDetailsImpl(user));
     }
 
     /**

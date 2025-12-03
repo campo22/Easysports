@@ -2,6 +2,7 @@ package com.easysports.dto.team;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -24,5 +25,6 @@ public class CreateTeamRequest {
      * Debe coincidir con una de las constantes del enum Deporte.
      */
     @NotNull(message = "El tipo de deporte no puede ser nulo")
+    @Pattern(regexp = "^(FUTBOL|BASKET|VOLEY|AMERICANO)$", message = "Deporte inválido. Los valores permitidos son: FUTBOL, BASKET, VOLEY, AMERICANO")
     private String tipoDeporte; // Se validará contra el enum Deporte en el servicio
 }
