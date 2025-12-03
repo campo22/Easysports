@@ -82,7 +82,7 @@ public class TeamServiceImpl implements TeamService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario a invitar no encontrado."));
 
         // Validar si ya es miembro o tiene invitación pendiente
-        if (miembroEquipoRepository.findByUsuarioIdAndEquipoId(usuarioAInvitar.getId(), equipoId).isPresent()) {
+        if (miembroEquipoRepository.findByEquipoIdAndUsuarioId(equipoId, usuarioAInvitar.getId()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya es miembro o tiene una invitación pendiente para este equipo.");
         }
 
