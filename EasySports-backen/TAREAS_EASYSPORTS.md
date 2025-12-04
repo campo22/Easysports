@@ -1,4 +1,4 @@
-# Tareas Backend EasySports
+# Tareas Backend y Frontend EasySports
 
 ## TAREAS REALIZADAS:
 
@@ -63,6 +63,18 @@
 22. **Preparación para despliegue (Docker, CI/CD):**
     *   **Hecho:** Creado `Dockerfile` en `/EasySports-backen/Dockerfile` para contenerizar la aplicación.
     *   **Hecho:** Imagen construida con Maven en la primera etapa y ejecutada con OpenJDK 17 en la segunda etapa.
+23. **Implementación de vistas móviles en Flutter:**
+    *   **Hecho:** Creación de vistas para login/registro de usuarios
+    *   **Hecho:** Implementación de vistas para creación y gestión de equipos
+    *   **Hecho:** Implementación de vistas para creación y gestión de partidos
+    *   **Hecho:** Implementación de vistas para ligas y tablas de posiciones
+    *   **Hecho:** Implementación de vistas para perfiles de usuario y equipos
+    *   **Hecho:** Integración completa entre vistas y backend
+    *   **Hecho:** Implementación de navegación entre vistas
+24. **Corrección de errores y warnings en Flutter:**
+    *   **Hecho:** Identificación y solución de errores de compilación
+    *   **Hecho:** Ajuste de referencias a métodos y clases existentes
+    *   **Hecho:** Mejora de la estabilidad general del frontend
 
 ---
 
@@ -76,6 +88,9 @@
     *   **Agregar índices a las columnas usadas frecuentemente en búsquedas para mejorar rendimiento.**
 4.  **Configuración de pipeline de CI/CD:**
     *   **Implementar pipeline para integración y despliegue continuo.**
+5.  **(Opcional) Mejora de warnings de estilo en Flutter:**
+    *   **Resolver advertencias de 'BuildContext across async gaps' (no afectan funcionalidad, solo buenas prácticas)**
+    *   **Aplicar mejores prácticas de desarrollo Flutter**
 
 **Resumen:**
 
@@ -83,7 +98,8 @@
 *   **Lógica de Dominio:** Implementada y documentada (`LOGICA_ENCARGOS.md`).
 *   **Despliegue:** Facilitado con `Dockerfile`.
 *   **Logging:** Implementado con `@Slf4j`.
-*   **Falta:** **Complementar con pruebas exhaustivas, configuración de ambientes, optimización de BD y pipeline CI/CD.**
+*   **Frontend Móvil:** Funcionalidades principales implementadas en Flutter.
+*   **Falta:** **Complementar con pruebas exhaustivas, configuración de ambientes, optimización de BD, pipeline CI/CD y solución de advertencias de estilo en Flutter.**
 
 ## TAREAS PRIORITARIAS:
 
@@ -95,3 +111,5 @@
     *   **Prioridad:** Alta. Asegura buen rendimiento en producción.
 4.  **Configuración de pipeline CI/CD:** (Ver Tareas Pendientes #4)
     *   **Prioridad:** Media-Alta. Automatiza los procesos de integración y despliegue.
+5.  **(Opcional) Mejora de warnings de estilo en Flutter:** (Ver Tareas Pendientes #5)
+    *   **Prioridad:** Baja. Mejora la calidad del código del frontend (no afecta funcionalidad).
