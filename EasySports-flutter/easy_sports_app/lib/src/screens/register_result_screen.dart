@@ -3,6 +3,7 @@ import 'package:easy_sports_app/src/models/match.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RegisterResultScreen extends StatefulWidget {
   final Match match;
@@ -68,7 +69,7 @@ class _RegisterResultScreenState extends State<RegisterResultScreen> {
         SnackBar(content: Text('Error al registrar resultado: $e')),
       );
     } finally {
-      if mounted {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });

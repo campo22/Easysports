@@ -52,7 +52,7 @@ class _JoinMatchScreenState extends State<JoinMatchScreen> {
         SnackBar(content: Text('Error de red: $e')),
       );
     } finally {
-      if mounted; {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
