@@ -35,17 +35,33 @@ class AuthProvider with ChangeNotifier {
   Future<void> login(String email, String password) async {
     try {
       final response = await _authService.login(email, password);
-      final token = response['accessToken']; 
+      // El backend devuelve { "token": "..." }
+      final token = response['token']; 
       await _saveToken(token);
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<void> register(String nombre, String email, String password) async {
+  Future<void> register(
+    String nombreCompleto, 
+    String email, 
+    String password,
+    String sexo,
+    int edadAnios,
+    int edadMeses,
+  ) async {
     try {
-      final response = await _authService.register(nombre, email, password);
-      final token = response['accessToken'];
+      final response = await _authService.register(
+        nombreCompleto, 
+        email, 
+        password,
+        sexo,
+        edadAnios,
+        edadMeses,
+      );
+      // El backend devuelve { "token": "..." }
+      final token = response['token'];
       await _saveToken(token);
     } catch (e) {
       rethrow;

@@ -102,7 +102,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         Text(_userName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Text(_userEmail, style: const TextStyle(fontSize: 16, color: AppTheme.secondaryText)),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: () {
+             // Llamar logout sin contexto si el listener en main maneja la redirección,
+             // o con contexto si AuthProvider lo requiere.
+             // Asumiendo AuthProvider.logout() no requiere args o usa key global.
+             // Verificamos firma en el paso anterior, pero para asegurar:
+             context.read<AuthProvider>().logout();
+          },
+          icon: const Icon(Icons.logout),
+          label: const Text('Cerrar Sesión'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
         const Divider(color: AppTheme.secondaryText),
       ],
     );

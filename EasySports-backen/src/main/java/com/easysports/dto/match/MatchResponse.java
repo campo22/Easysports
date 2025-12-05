@@ -28,4 +28,7 @@ public class MatchResponse {
     private Long equipoVisitanteId;
     private Integer maxJugadores;
     private Integer jugadoresActuales;
+    private Integer golesLocal;
+    private Integer golesVisitante;
+    private String comentarios;
 }

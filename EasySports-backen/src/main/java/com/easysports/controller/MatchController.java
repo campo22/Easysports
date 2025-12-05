@@ -2,6 +2,7 @@ package com.easysports.controller;
 
 import com.easysports.dto.match.MatchRequest;
 import com.easysports.dto.match.MatchResponse;
+import com.easysports.dto.match.ResultRequest;
 import com.easysports.enums.Deporte;
 import com.easysports.enums.MatchStatus;
 import com.easysports.service.MatchService;
@@ -98,6 +99,21 @@ public class MatchController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<MatchResponse> joinMatch(@PathVariable String codigo, Authentication authentication) {
         MatchResponse response = matchService.joinMatch(codigo, authentication);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Registra el resultado de un encuentro.
+     * Solo el creador del encuentro puede registrar el resultado.
+     * @param codigo Código del encuentro.
+     * @param request DTO con los datos del resultado.
+     * @param authentication Contexto de autenticación del usuario.
+     * @return ResponseEntity con los detalles del encuentro actualizado y estado HTTP 200.
+     */
+    @PutMapping("/{codigo}/resultados")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<MatchResponse> registrarResultado(@PathVariable String codigo, @Valid @RequestBody ResultRequest request, Authentication authentication) {
+        MatchResponse response = matchService.registerResult(codigo, request, authentication);
         return ResponseEntity.ok(response);
     }
 }

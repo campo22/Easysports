@@ -2,6 +2,7 @@ package com.easysports.service.impl;
 
 import com.easysports.dto.match.MatchRequest;
 import com.easysports.dto.match.MatchResponse;
+import com.easysports.dto.match.ResultRequest;
 import com.easysports.enums.Deporte;
 import com.easysports.enums.MatchStatus;
 import com.easysports.enums.MatchType;
@@ -222,6 +223,29 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
+    @Transactional
+    public MatchResponse registerResult(String codigo, ResultRequest request, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getId();
+
+        Match match = matchRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuentro no encontrado."));
+
+        // Validar que el usuario sea el creador
+        if (!Objects.equals(match.getCreador().getId(), userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el creador del encuentro puede registrar el resultado.");
+        }
+
+        match.setGolesLocal(request.getGolesLocal());
+        match.setGolesVisitante(request.getGolesVisitante());
+        match.setComentarios(request.getComentarios());
+        match.setEstado(MatchStatus.FINALIZADO);
+
+        matchRepository.save(match);
+        return toResponse(match);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public MatchResponse findByCodigo(String codigo) {
         return matchRepository.findByCodigo(codigo)
@@ -246,6 +270,9 @@ public class MatchServiceImpl implements MatchService {
                 .equipoVisitanteId(match.getEquipoVisitante() != null ? match.getEquipoVisitante().getId() : null)
                 .maxJugadores(match.getMaxJugadores())
                 .jugadoresActuales(match.getJugadoresActuales())
+                .golesLocal(match.getGolesLocal())
+                .golesVisitante(match.getGolesVisitante())
+                .comentarios(match.getComentarios())
                 .build();
     }
 

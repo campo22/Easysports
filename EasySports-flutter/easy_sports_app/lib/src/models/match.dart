@@ -12,6 +12,9 @@ class Match {
   final int? equipoVisitanteId;
   final int maxJugadores;
   final int jugadoresActuales;
+  final int? golesLocal;
+  final int? golesVisitante;
+  final String? comentarios;
 
   Match({
     required this.id,
@@ -27,6 +30,9 @@ class Match {
     this.equipoVisitanteId,
     required this.maxJugadores,
     required this.jugadoresActuales,
+    this.golesLocal,
+    this.golesVisitante,
+    this.comentarios,
   });
 
   factory Match.fromJson(Map<String, dynamic> json) {
@@ -44,6 +50,9 @@ class Match {
       equipoVisitanteId: json['equipoVisitanteId'],
       maxJugadores: json['maxJugadores'],
       jugadoresActuales: json['jugadoresActuales'],
+      golesLocal: json['golesLocal'],
+      golesVisitante: json['golesVisitante'],
+      comentarios: json['comentarios'],
     );
   }
 }

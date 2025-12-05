@@ -6,5 +6,6 @@ package com.easysports.enums;
  */
 public enum Sexo {
     HOMBRE,
-    MUJER
+    MUJER,
+    OTRO
 }

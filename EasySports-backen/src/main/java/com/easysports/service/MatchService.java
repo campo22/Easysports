@@ -2,6 +2,7 @@ package com.easysports.service;
 
 import com.easysports.dto.match.MatchRequest;
 import com.easysports.dto.match.MatchResponse;
+import com.easysports.dto.match.ResultRequest;
 import com.easysports.enums.Deporte;
 import com.easysports.enums.MatchStatus;
 import org.springframework.data.domain.Page;
@@ -53,4 +54,14 @@ public interface MatchService {
      * @return DTO con la información del encuentro.
      */
     MatchResponse findByCodigo(String codigo);
+
+    /**
+     * Registra el resultado de un encuentro.
+     *
+     * @param codigo Código del encuentro.
+     * @param request Datos del resultado.
+     * @param authentication Usuario autenticado (debe ser el creador).
+     * @return El encuentro actualizado con el resultado.
+     */
+    MatchResponse registerResult(String codigo, ResultRequest request, Authentication authentication);
 }

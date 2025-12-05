@@ -45,19 +45,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         await context.read<AuthProvider>().register(
-              _nombreCompletoController.text,
-              _emailController.text,
+              _nombreCompletoController.text.trim(),
+              _emailController.text.trim(),
               _passwordController.text,
-              // Nota: El AuthProvider actual solo acepta nombre, email y password.
-              // Si el backend requiere sexo y edad, debemos actualizar el AuthProvider y AuthService.
-              // Por ahora, asumiremos que el registro básico funciona y luego se puede actualizar el perfil
-              // o que actualizaremos el AuthProvider para aceptar todos los campos.
-              //
-              // IMPORTANTE: Para mantener la consistencia con el código anterior, 
-              // voy a asumir que debemos enviar todos los datos. 
-              // Sin embargo, el método register de AuthProvider que creamos antes solo aceptaba 3 argumentos.
-              // Voy a llamar al método con los 3 argumentos principales por ahora para que compile,
-              // pero DEBERÍAMOS actualizar el AuthProvider para soportar el registro completo.
+              _selectedSexo!,
+              int.parse(_edadAniosController.text),
+              int.parse(_edadMesesController.text),
             );
         
         // Si el registro es exitoso y el AuthProvider hace login automático (guarda token),

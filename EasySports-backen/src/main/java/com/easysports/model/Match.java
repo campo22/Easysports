@@ -103,4 +103,13 @@ public class Match {
      */
     @Column(name = "jugadores_actuales", nullable = false)
     private Integer jugadoresActuales = 0;
+
+    @Column(name = "goles_local")
+    private Integer golesLocal;
+
+    @Column(name = "goles_visitante")
+    private Integer golesVisitante;
+
+    @Column(length = 500)
+    private String comentarios;
 }
