@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
@@ -51,7 +52,7 @@ class _JoinMatchScreenState extends State<JoinMatchScreen> {
         SnackBar(content: Text('Error de red: $e')),
       );
     } finally {
-      if mounted {
+      if mounted; {
         setState(() {
           _isLoading = false;
         });

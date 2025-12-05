@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/match.dart';
+import 'package:easy_sports_app/src/screens/register_result_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/services/auth_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 class MatchDetailScreen extends StatefulWidget {
   final Match match;

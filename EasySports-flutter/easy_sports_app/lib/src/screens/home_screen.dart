@@ -1,5 +1,6 @@
 import 'package:easy_sports_app/src/screens/create_match_screen.dart';
 import 'package:easy_sports_app/src/screens/matches_dashboard_screen.dart';
+import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/screens/user_profile_screen.dart';
 import 'package:easy_sports_app/src/screens/user_teams_screen.dart';
 import 'package:easy_sports_app/src/screens/ligas_screen.dart';
