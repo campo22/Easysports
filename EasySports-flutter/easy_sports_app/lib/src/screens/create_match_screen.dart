@@ -44,12 +44,11 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
       setState(() => _isLoading = true);
 
       final Map<String, dynamic> body = {
-        'tipoEncuentro': _tipoEncuentro.name,
+        'tipo': _tipoEncuentro.name,
         'deporte': _selectedDeporte,
         'fechaProgramada': _selectedDate!.toIso8601String(),
-        'ubicacion': _ubicacionController.text,
+        'nombreCanchaTexto': _ubicacionController.text,
         'maxJugadores': int.tryParse(_cupoController.text) ?? 2,
-        'estado': 'PROGRAMADO',
       };
 
       if (_tipoEncuentro == TipoEncuentro.FORMAL) {
