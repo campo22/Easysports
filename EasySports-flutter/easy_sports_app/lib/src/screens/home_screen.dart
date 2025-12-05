@@ -95,6 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications, color: AppTheme.primaryText),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TeamInvitationsScreen()),
+            );
+          },
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: GestureDetector(

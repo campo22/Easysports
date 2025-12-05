@@ -133,14 +133,128 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ... (código de detalles existente)
+                        Card(
+                          color: AppTheme.cardBackground,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _currentMatch.tipo == 'FORMAL'
+                                            ? '${_currentMatch.equipoLocalId != null ? 'Equipo Local' : 'Equipo'} vs ${_currentMatch.equipoVisitanteId != null ? 'Equipo Visitante' : 'Equipo'}'
+                                            : 'Partido Casual',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _currentMatch.estado == 'FINALIZADO'
+                                            ? Colors.green.withOpacity(0.2)
+                                            : Colors.orange.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        _currentMatch.estado,
+                                        style: TextStyle(
+                                          color: _currentMatch.estado == 'FINALIZADO'
+                                              ? Colors.green
+                                              : Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailRow(
+                                  Icons.sports_soccer,
+                                  'Deporte',
+                                  _currentMatch.deporte,
+                                ),
+                                _buildDetailRow(
+                                  Icons.calendar_today,
+                                  'Fecha',
+                                  _formatDate(_currentMatch.fechaProgramada),
+                                ),
+                                _buildDetailRow(
+                                  Icons.location_on,
+                                  'Ubicación',
+                                  _currentMatch.nombreCanchaTexto ?? 'No especificada',
+                                ),
+                                _buildDetailRow(
+                                  Icons.people,
+                                  'Jugadores',
+                                  '${_currentMatch.jugadoresActuales}/${_currentMatch.maxJugadores}',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Participantes',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 200, // Altura fija para la lista de participantes
+                          child: _participants.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No hay participantes aún',
+                                    style: TextStyle(color: AppTheme.secondaryText),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(), // Para evitar conflictos de scroll
+                                  itemCount: _participants.length,
+                                  itemBuilder: (context, index) {
+                                    final participant = _participants[index];
+                                    return ListTile(
+                                      leading: const CircleAvatar(
+                                        backgroundImage: NetworkImage('https://i.pravatar.cc/50'),
+                                      ),
+                                      title: Text(
+                                        participant['nombreCompleto'] ?? 'Usuario ${index + 1}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      trailing: participant['esCreador'] == true
+                                          ? const Icon(Icons.star, color: AppTheme.primaryColor)
+                                          : null,
+                                    );
+                                  },
+                                ),
+                        ),
                       ],
                     ),
                   ),
                 ),
       floatingActionButton: canRegisterResult
           ? FloatingActionButton.extended(
-              onPressed: _showRegisterResultDialog,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RegisterResultScreen(match: _currentMatch),
+                  ),
+                );
+              },
               label: const Text('Registrar Resultado'),
               icon: const Icon(Icons.check),
             )
@@ -148,8 +262,27 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     );
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildDetailRow(IconData icon, String label, String value) {
-    // ... (código de detalles existente)
-    return Container();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 20),
+          const SizedBox(width: 12),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          Text(
+            value,
+            style: const TextStyle(color: AppTheme.primaryText),
+          ),
+        ],
+      ),
+    );
   }
 }
