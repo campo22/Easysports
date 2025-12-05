@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
+import 'package:easy_sports_app/src/theme/app_theme.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,22 +13,24 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _apiService = ApiService();
+
+  final _nombreCompletoController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _ageYearsController = TextEditingController();
-  final _ageMonthsController = TextEditingController();
-  String? _selectedGender;
-  final _apiService = ApiService();
+  String? _selectedSexo;
+  final _edadAniosController = TextEditingController();
+  final _edadMesesController = TextEditingController();
+
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nombreCompletoController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _ageYearsController.dispose();
-    _ageMonthsController.dispose();
+    _edadAniosController.dispose();
+    _edadMesesController.dispose();
     super.dispose();
   }
 
@@ -37,26 +41,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       try {
-        final response = await _apiService.post('auth/registro', {
-          'nombreCompleto': _nameController.text,
+        final response = await _apiService.post('auth/register', {
+          'nombreCompleto': _nombreCompletoController.text,
           'email': _emailController.text,
           'password': _passwordController.text,
-          'edadAnios': int.parse(_ageYearsController.text),
-          'edadMeses': int.parse(_ageMonthsController.text),
-          'sexo': _selectedGender,
+          'sexo': _selectedSexo,
+          'edadAnios': int.tryParse(_edadAniosController.text) ?? 0,
+          'edadMeses': int.tryParse(_edadMesesController.text) ?? 0,
         });
 
-        if (response.statusCode == 201) {
-          final data = jsonDecode(response.body);
-          await _apiService.saveToken(data['token']);
-          Navigator.pushReplacementNamed(
-            context,
-            '/home', // Utilizamos navegación por nombre
-          );
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Registro exitoso. Ahora puedes iniciar sesión.')),
+            );
+            Navigator.pop(context); // Regresa a la pantalla de login
+          }
         } else {
-          final errorData = jsonDecode(response.body);
+           final errorData = jsonDecode(response.body);
+           final errorMessage = errorData['message'] ?? 'Error en el registro';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al registrar: ${errorData['message'] ?? 'Error desconocido'}')),
+            SnackBar(content: Text(errorMessage)),
           );
         }
       } catch (e) {
@@ -64,9 +69,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SnackBar(content: Text('Error: $e')),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if(mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -75,21 +82,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrarse'),
+        // El estilo se toma automáticamente del AppTheme
+        title: const Text('Crear Cuenta'),
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
-          child: ListView(
-            // Use ListView to make the form scrollable
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'Únete a la comunidad',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Completa tus datos para empezar',
+                style: TextStyle(fontSize: 16, color: AppTheme.secondaryText),
+              ),
+              const SizedBox(height: 32.0),
               TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre Completo',
-                  border: OutlineInputBorder(),
-                ),
+                controller: _nombreCompletoController,
+                decoration: const InputDecoration(labelText: 'Nombre Completo'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, introduce tu nombre completo';
@@ -100,10 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty || !value.contains('@')) {
@@ -115,10 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Contraseña'),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty || value.length < 6) {
@@ -128,20 +138,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 16.0),
+              DropdownButtonFormField<String>(
+                value: _selectedSexo,
+                decoration: const InputDecoration(
+                  labelText: 'Sexo',
+                ),
+                items: ['HOMBRE', 'MUJER'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedSexo = newValue;
+                  });
+                },
+                validator: (value) => value == null ? 'Campo requerido' : null,
+              ),
+              const SizedBox(height: 16.0),
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
-                      controller: _ageYearsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Edad (años)',
-                        border: OutlineInputBorder(),
-                      ),
+                      controller: _edadAniosController,
+                      decoration: const InputDecoration(labelText: 'Años'),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
-                        if (value == null || value.isEmpty || int.tryParse(value) == null) {
-                          return 'Introduce años';
-                        }
+                        if (value == null || value.isEmpty) return 'Requerido';
+                        if (int.tryParse(value) == null || int.parse(value) < 0) return 'Inválido';
                         return null;
                       },
                     ),
@@ -149,63 +175,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(width: 16.0),
                   Expanded(
                     child: TextFormField(
-                      controller: _ageMonthsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Edad (meses)',
-                        border: OutlineInputBorder(),
-                      ),
+                      controller: _edadMesesController,
+                      decoration: const InputDecoration(labelText: 'Meses'),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
-                        if (value == null || value.isEmpty || int.tryParse(value) == null) {
-                          return 'Introduce meses';
-                        }
+                        if (value == null || value.isEmpty) return 'Requerido';
+                        final meses = int.tryParse(value);
+                        if (meses == null || meses < 0 || meses > 11) return '0-11';
                         return null;
                       },
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16.0),
-              DropdownButtonFormField<String>(
-                value: _selectedGender,
-                decoration: const InputDecoration(
-                  labelText: 'Género',
-                  border: OutlineInputBorder(),
-                ),
-                items: ['MASCULINO', 'FEMENINO', 'OTRO']
-                    .map((label) => DropdownMenuItem(
-                          value: label,
-                          child: Text(label),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, selecciona tu género';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 32.0),
               _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
                       onPressed: _register,
-                      child: const Text('Registrarse'),
+                      child: const Text('Crear mi Cuenta'),
                     ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/login', // Utilizamos navegación por nombre
-                  );
-                },
-                child: const Text('¿Ya tienes cuenta? Inicia Sesión'),
-              ),
             ],
           ),
         ),

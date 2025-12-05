@@ -1,4 +1,9 @@
+import 'package:easy_sports_app/src/screens/create_match_screen.dart';
+import 'package:easy_sports_app/src/screens/create_team_screen.dart';
+import 'package:easy_sports_app/src/screens/home_screen.dart';
 import 'package:easy_sports_app/src/screens/login_screen.dart';
+import 'package:easy_sports_app/src/screens/register_screen.dart';
+import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,11 +17,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EasySports',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const LoginScreen(),
+      theme: AppTheme.darkTheme,
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/create-match': (context) => const CreateMatchScreen(),
+        '/create-team': (context) => const CreateTeamScreen(),
+        // No es necesario registrar aquí porque la navegación es por MaterialPageRoute
+      },
     );
   }
 }

@@ -1,7 +1,10 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
-import 'package:easy_sports_app/src/models/match.dart'; // Import the Match model
+import 'package:easy_sports_app/src/theme/app_theme.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+enum TipoEncuentro { CASUAL, FORMAL }
 
 class CreateMatchScreen extends StatefulWidget {
   const CreateMatchScreen({super.key});
@@ -12,310 +15,243 @@ class CreateMatchScreen extends StatefulWidget {
 
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
   final _formKey = GlobalKey<FormState>();
-  final ApiService _apiService = ApiService();
+  final _apiService = ApiService();
 
-  final TextEditingController _nombreController = TextEditingController();
+  // Controllers
+  final _nombreController = TextEditingController();
+  final _ubicacionController = TextEditingController();
+  final _cupoController = TextEditingController();
+
+  // State variables
+  TipoEncuentro _tipoEncuentro = TipoEncuentro.CASUAL;
   String? _selectedDeporte;
-  String? _selectedTipo;
-  final TextEditingController _fechaProgramdaController = TextEditingController();
-  final TextEditingController _maxJugadoresController = TextEditingController();
-  final TextEditingController _canchaIdController = TextEditingController();
-  final TextEditingController _nombreCanchaTextoController = TextEditingController();
-  final TextEditingController _equipoLocalIdController = TextEditingController();
-  final TextEditingController _equipoVisitanteIdController = TextEditingController();
-
+  DateTime? _selectedDate;
   bool _isLoading = false;
 
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-
-  @override
-  void dispose() {
-    _nombreController.dispose();
-    _fechaProgramdaController.dispose();
-    _maxJugadoresController.dispose();
-    _canchaIdController.dispose();
-    _nombreCanchaTextoController.dispose();
-    _equipoLocalIdController.dispose();
-    _equipoVisitanteIdController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 3)), // Max 3 days in future
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _fechaProgramdaController.text =
-            "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}";
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null && picked != _selectedTime) {
-      // Validate minutes are multiples of 15
-      if (picked.minute % 15 != 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('La hora debe ser en múltiplos de 15 minutos.')),
-        );
-        return;
-      }
-      setState(() {
-        _selectedTime = picked;
-        _fechaProgramdaController.text =
-            "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} ${picked.format(context)}";
-      });
-    }
-  }
+  // TODO: Cargar los equipos del usuario y los equipos rivales desde la API
+  String? _selectedEquipoLocalId;
+  String? _selectedEquipoVisitanteId;
 
   Future<void> _createMatch() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Construct fechaProgramada
-      DateTime? dateTime;
-      if (_selectedDate != null && _selectedTime != null) {
-        dateTime = DateTime(
-          _selectedDate!.year,
-          _selectedDate!.month,
-          _selectedDate!.day,
-          _selectedTime!.hour,
-          _selectedTime!.minute,
+      if (_selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, selecciona una fecha y hora')),
         );
+        return;
       }
 
-      final Map<String, dynamic> matchData = {
-        'nombre': _nombreController.text,
-        'tipo': _selectedTipo,
+      setState(() => _isLoading = true);
+
+      final Map<String, dynamic> body = {
+        'tipoEncuentro': _tipoEncuentro.name,
         'deporte': _selectedDeporte,
-        'fechaProgramada': dateTime?.toIso8601String(),
-        'maxJugadores': int.parse(_maxJugadoresController.text),
+        'fechaProgramada': _selectedDate!.toIso8601String(),
+        'ubicacion': _ubicacionController.text,
+        'maxJugadores': int.tryParse(_cupoController.text) ?? 2,
+        'estado': 'PROGRAMADO',
       };
 
-      if (_canchaIdController.text.isNotEmpty) {
-        matchData['canchaId'] = int.parse(_canchaIdController.text);
-      } else if (_nombreCanchaTextoController.text.isNotEmpty) {
-        matchData['nombreCanchaTexto'] = _nombreCanchaTextoController.text;
-      }
-
-      if (_selectedTipo == 'FORMAL') {
-        if (_equipoLocalIdController.text.isNotEmpty) {
-          matchData['equipoLocalId'] = int.parse(_equipoLocalIdController.text);
-        }
-        if (_equipoVisitanteIdController.text.isNotEmpty) {
-          matchData['equipoVisitanteId'] = int.parse(_equipoVisitanteIdController.text);
-        }
+      if (_tipoEncuentro == TipoEncuentro.FORMAL) {
+        body['equipoLocalId'] = _selectedEquipoLocalId;
+        body['equipoVisitanteId'] = _selectedEquipoVisitanteId;
       }
 
       try {
-        final response = await _apiService.post('/matches', matchData);
-
-        if (response.statusCode == 201) {
-          final data = jsonDecode(response.body);
-          final Match newMatch = Match.fromJson(data);
+        await _apiService.post('encuentros', body); // Endpoint actualizado
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Partido ${newMatch.codigo} creado exitosamente!')),
+            const SnackBar(content: Text('¡Encuentro creado con éxito!')),
           );
-          Navigator.pop(context); // Go back to dashboard
-        } else {
-          final errorData = jsonDecode(response.body);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al crear partido: ${errorData['reason'] ?? errorData['message'] ?? 'Error desconocido'}')),
-          );
+          Navigator.pop(context, true); 
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error de conexión: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al crear el encuentro: $e')),
+          );
+        }
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _pickDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 3)), // Regla de negocio: max 3 días
+    );
+    if (date == null) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
+    );
+    if (time == null) return;
+
+    // Regla de negocio: ajustar minutos a intervalos de 15
+    final int minute = (time.minute / 15).round() * 15 % 60;
+
+    setState(() {
+      _selectedDate = DateTime(date.year, date.month, date.day, time.hour, minute);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crear Nuevo Partido'),
+        title: const Text('Crear Nuevo Encuentro'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text('Tipo de Encuentro', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              _buildTypeSelector(),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _nombreController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre del Partido',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, introduce un nombre para el partido';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: 'Nombre del Partido (Opcional)'),
               ),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: 16),
+              if (_tipoEncuentro == TipoEncuentro.FORMAL)
+                _buildFormalMatchFields(),
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Deporte',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Deporte'),
                 value: _selectedDeporte,
-                items: ['FUTBOL', 'BALONCESTO', 'VOLEY', 'TENIS']
-                    .map((label) => DropdownMenuItem(
-                          value: label,
-                          child: Text(label),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDeporte = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, selecciona un deporte';
-                  }
-                  return null;
-                },
+                items: ['FUTBOL', 'BALONCESTO', 'VOLEY', 'TENIS', 'OTRO'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                onChanged: (v) => setState(() => _selectedDeporte = v),
+                validator: (v) => v == null ? 'Selecciona un deporte' : null,
               ),
-              const SizedBox(height: 16.0),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de Partido',
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedTipo,
-                items: ['CASUAL', 'FORMAL']
-                    .map((label) => DropdownMenuItem(
-                          value: label,
-                          child: Text(label),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedTipo = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, selecciona un tipo de partido';
-                  }
-                  return null;
-                },
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _ubicacionController,
+                      decoration: const InputDecoration(labelText: 'Ubicación'),
+                      validator: (v) => (v == null || v.isEmpty) ? 'Introduce una ubicación' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cupoController,
+                      decoration: const InputDecoration(labelText: 'Cupo'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Requerido';
+                        if ((int.tryParse(v) ?? 0) < 2) return '>= 2';
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _fechaProgramdaController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Fecha y Hora Programada',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      await _selectDate(context);
-                      if (_selectedDate != null) {
-                        await _selectTime(context);
-                      }
-                    },
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _pickDateTime,
+                child: InputDecorator(
+                  decoration: const InputDecoration(labelText: 'Fecha y Hora'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedDate == null ? 'No seleccionada' : DateFormat('dd/MM/yy - hh:mm a').format(_selectedDate!),
+                      ),
+                      const Icon(Icons.calendar_today, color: AppTheme.secondaryText),
+                    ],
                   ),
                 ),
-                validator: (value) {
-                  if (_selectedDate == null || _selectedTime == null) {
-                    return 'Por favor, selecciona fecha y hora';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _maxJugadoresController,
-                decoration: const InputDecoration(
-                  labelText: 'Máximo de Jugadores',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty || int.tryParse(value) == null || int.parse(value) <= 0) {
-                    return 'Introduce un número válido de jugadores';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _canchaIdController,
-                decoration: const InputDecoration(
-                  labelText: 'ID de Cancha (opcional)',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _nombreCanchaTextoController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de Cancha (texto, opcional)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              if (_selectedTipo == 'FORMAL') ...[
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  controller: _equipoLocalIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'ID Equipo Local',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (_selectedTipo == 'FORMAL' && (value == null || value.isEmpty || int.tryParse(value) == null)) {
-                      return 'Para partidos formales, el ID del equipo local es obligatorio';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  controller: _equipoVisitanteIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'ID Equipo Visitante (opcional)',
-                    border: OutlineInputBorder(),
-                    hintText: 'Dejar vacío si no hay equipo visitante',
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ],
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 32),
               _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
                       onPressed: _createMatch,
-                      child: const Text('Crear Partido'),
+                      child: const Text('Crear Encuentro'),
                     ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTypeSelector() {
+    return SegmentedButton<TipoEncuentro>(
+      segments: const [
+        ButtonSegment(value: TipoEncuentro.CASUAL, label: Text('Casual'), icon: Icon(Icons.person_add_alt_1)),
+        ButtonSegment(value: TipoEncuentro.FORMAL, label: Text('Formal'), icon: Icon(Icons.groups)),
+      ],
+      selected: {_tipoEncuentro},
+      onSelectionChanged: (Set<TipoEncuentro> newSelection) {
+        setState(() {
+          _tipoEncuentro = newSelection.first;
+        });
+      },
+      // Código corregido para ser compatible con versiones anteriores de Flutter
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
+              return AppTheme.background;
+            }
+            return AppTheme.cardBackground;
+          },
+        ),
+        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
+              return AppTheme.primaryColor;
+            }
+            return AppTheme.primaryText;
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormalMatchFields() {
+    // TODO: Reemplazar con datos reales de la API
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(labelText: 'Equipo Local'),
+          items: const [
+            DropdownMenuItem(value: '1', child: Text('Mi Equipo 1')),
+            DropdownMenuItem(value: '2', child: Text('Mi Equipo 2')),
+          ],
+          onChanged: (v) => setState(() => _selectedEquipoLocalId = v),
+          validator: (v) => v == null ? 'Selecciona equipo local' : null,
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(labelText: 'Equipo Visitante'),
+          items: const [
+            DropdownMenuItem(value: '3', child: Text('Equipo Rival 1')),
+            DropdownMenuItem(value: '4', child: Text('Equipo Rival 2')),
+          ],
+          onChanged: (v) => setState(() => _selectedEquipoVisitanteId = v),
+          validator: (v) => v == null ? 'Selecciona equipo visitante' : null,
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }

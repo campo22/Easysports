@@ -3,35 +3,34 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  final String _baseUrl = "http://localhost:8080/api"; // Reemplazar con la URL del backend
-  String? _token;
+  // 1. Si usas el emulador de Android, `10.0.2.2` apunta al `localhost` de tu máquina.
+  // 2. Si usas un dispositivo físico, reemplaza `10.0.2.2` con la IP de tu máquina.
+  final String _baseUrl = "http://10.0.2.2:8080/api";
 
-  Future<void> _loadToken() async {
-    if (_token == null) {
-      final prefs = await SharedPreferences.getInstance();
-      _token = prefs.getString('jwt_token');
-    }
-  }
-
+  // Guarda el token en el almacenamiento persistente.
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('jwt_token', token);
-    _token = token;
   }
 
+  // Elimina el token del almacenamiento.
   Future<void> deleteToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
-    _token = null;
   }
 
+  // Método privado para construir las cabeceras con el token.
+  // Lee el token directamente de SharedPreferences cada vez.
   Future<Map<String, String>> _getHeaders() async {
-    await _loadToken();
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+
     final headers = {
       'Content-Type': 'application/json; charset=UTF-8',
     };
-    if (_token != null) {
-      headers['Authorization'] = 'Bearer $_token';
+
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
     }
     return headers;
   }
