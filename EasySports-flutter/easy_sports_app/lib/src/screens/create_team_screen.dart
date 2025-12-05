@@ -1,5 +1,6 @@
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
+import 'package:easy_sports_app/src/widgets/sport_components.dart';
 import 'package:flutter/material.dart';
 
 class CreateTeamScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
   final _apiService = ApiService();
 
   final _nombreController = TextEditingController();
-  String? _selectedDeporte;
+  final _descripcionController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> _createTeam() async {
@@ -22,21 +23,38 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
       setState(() => _isLoading = true);
 
       try {
-        await _apiService.crearEquipo({
-          'nombre': _nombreController.text,
-          'deporte': _selectedDeporte,
+        final response = await _apiService.crearEquipo({
+          'nombre': _nombreController.text.trim(),
+          'descripcion': _descripcionController.text.trim(),
         });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Equipo creado con éxito!')),
-          );
-          Navigator.pop(context, true); // Regresa y señaliza que se debe recargar
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Equipo creado con éxito!'),
+                backgroundColor: AppTheme.successGreen,
+              ),
+            );
+            Navigator.pop(context, true);
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${response.body}'),
+                backgroundColor: AppTheme.errorRed,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al crear el equipo: $e')),
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: AppTheme.errorRed,
+            ),
           );
         }
       } finally {
@@ -50,14 +68,17 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
   @override
   void dispose() {
     _nombreController.dispose();
+    _descripcionController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
         title: const Text('Crear Nuevo Equipo'),
+        backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -68,7 +89,11 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
             children: [
               const Text(
                 'Datos del Equipo',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryText,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -78,26 +103,28 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
               const SizedBox(height: 32.0),
               TextFormField(
                 controller: _nombreController,
-                decoration: const InputDecoration(labelText: 'Nombre del Equipo'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del Equipo',
+                  prefixIcon: Icon(Icons.shield, color: AppTheme.secondaryText),
+                ),
                 validator: (v) => (v == null || v.isEmpty) ? 'Introduce un nombre' : null,
               ),
               const SizedBox(height: 16.0),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Deporte Principal'),
-                value: _selectedDeporte,
-                items: ['FUTBOL', 'BALONCESTO', 'VOLEY', 'TENIS', 'OTRO']
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedDeporte = v),
-                validator: (v) => v == null ? 'Selecciona un deporte' : null,
+              TextFormField(
+                controller: _descripcionController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción (opcional)',
+                  prefixIcon: Icon(Icons.description, color: AppTheme.secondaryText),
+                ),
+                maxLines: 3,
               ),
               const SizedBox(height: 32.0),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _createTeam,
-                      child: const Text('Crear Equipo'),
-                    ),
+              PrimaryButton(
+                text: 'Crear Equipo',
+                onPressed: _createTeam,
+                isLoading: _isLoading,
+                icon: Icons.add,
+              ),
             ],
           ),
         ),

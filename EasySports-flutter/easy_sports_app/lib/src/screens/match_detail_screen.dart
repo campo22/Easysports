@@ -63,9 +63,51 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     }
   }
 
+  Future<void> _joinMatch() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final response = await _apiService.unirseAEncuentro(_currentMatch.codigo);
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Te has unido al partido!'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+          await _fetchMatchDetails(); // Recargar detalles
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${response.body}'),
+              backgroundColor: AppTheme.errorRed,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool canRegisterResult = _isCreator && _currentMatch.estado != 'FINALIZADO';
+    final bool canJoin = !_isCreator && 
+                         _currentMatch.estado == 'ABIERTO' && 
+                         _currentMatch.jugadoresActuales < _currentMatch.maxJugadores;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
@@ -108,6 +150,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                           _buildResultSection(),
                         const SizedBox(height: 20),
                         _buildDetailsSection(),
+                        if (canJoin) ...[
+                          const SizedBox(height: 20),
+                          PrimaryButton(
+                            text: 'Unirse al Partido',
+                            onPressed: _joinMatch,
+                            icon: Icons.person_add,
+                          ),
+                        ],
                       ],
                     ),
                   ),

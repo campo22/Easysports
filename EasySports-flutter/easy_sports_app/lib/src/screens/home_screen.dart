@@ -128,45 +128,19 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = screenIndex;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppTheme.primaryOrange : AppTheme.tertiaryText,
-              size: 26,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected ? AppTheme.primaryOrange : AppTheme.tertiaryText,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildCenterButton() {
     return GestureDetector(
       onTap: () => _onItemTapped(2),
       child: Container(
-        width: 60,
-        height: 60,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          gradient: AppTheme.orangeGradient,
+          gradient: LinearGradient(
+            colors: [AppTheme.primaryOrange, Color(0xFFFF9800)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -179,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(
           Icons.add,
           color: Colors.white,
-          size: 32,
+          size: 30,
         ),
       ),
     );

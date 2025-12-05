@@ -24,7 +24,7 @@ class _EditTeamScreenState extends State<EditTeamScreen> {
   void initState() {
     super.initState();
     _nombreController = TextEditingController(text: widget.team.nombre);
-    _selectedDeporte = widget.team.deporte;
+    _selectedDeporte = null; // El modelo Team no tiene campo deporte
   }
 
   Future<void> _updateTeam() async {
