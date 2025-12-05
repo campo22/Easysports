@@ -33,7 +33,7 @@ class _RegisterResultScreenState extends State<RegisterResultScreen> {
 
     try {
       final response = await _apiService.registrarResultado(
-        widget.match.id,
+        widget.match.codigo,
         {
           'equipoLocalId': widget.match.equipoLocalId,
           'equipoVisitanteId': widget.match.equipoVisitanteId,

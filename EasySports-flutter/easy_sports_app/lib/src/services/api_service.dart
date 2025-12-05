@@ -56,7 +56,7 @@ class ApiService {
   Future<http.Response> getEncuentroPorCodigo(String codigo) => get('v1/matches/$codigo');
   Future<http.Response> crearEncuentro(Map<String, dynamic> data) => post('v1/matches', data);
   Future<http.Response> unirseAEncuentro(String codigo) => post('v1/matches/$codigo/unirse', {});
-  Future<http.Response> registrarResultado(int encuentroId, Map<String, dynamic> data) => put('v1/matches/$encuentroId/resultado', data);
+  Future<http.Response> registrarResultado(String codigoEncuentro, Map<String, dynamic> data) => put('v1/matches/$codigoEncuentro/resultados', data);
 
   // Ligas
   Future<http.Response> getClasificacionLiga(int ligaId) => get('v1/ligas/$ligaId/clasificacion');
