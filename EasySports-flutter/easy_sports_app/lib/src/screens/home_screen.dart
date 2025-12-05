@@ -1,14 +1,9 @@
 import 'package:easy_sports_app/src/screens/create_match_screen.dart';
 import 'package:easy_sports_app/src/screens/matches_dashboard_screen.dart';
-import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/screens/user_profile_screen.dart';
-import 'package:easy_sports_app/src/screens/user_teams_screen.dart';
 import 'package:easy_sports_app/src/screens/ligas_screen.dart';
-import 'package:easy_sports_app/src/providers/auth_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-
 import 'home_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,184 +14,174 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // final AuthService _authService = AuthService(); // Eliminado
   int _selectedIndex = 0;
-  String _userName = '...'; 
 
-  final GlobalKey<MatchesDashboardScreenState> _matchesDashboardKey = GlobalKey();
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
     _screens = <Widget>[
-      HomeDashboardScreen(),
-      const UserTeamsScreen(),
+      const HomeDashboardScreen(),
+      const MatchesDashboardScreen(),
       const LigasScreen(),
       const UserProfileScreen(),
     ];
   }
 
-  void _loadUserData() {
-    // Usamos addPostFrameCallback para asegurar que el contexto esté listo
-    // o simplemente leemos directamente si estamos en un build method, pero aquí es init/load.
-    // Provider listen: false está bien aquí.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-       final authProvider = context.read<AuthProvider>();
-       if (mounted) {
-         setState(() {
-           _userName = authProvider.userName ?? 'Usuario';
-         });
-       }
-    });
-  }
-
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _navigateToCreateMatch() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CreateMatchScreen()),
-    );
-    if (result == true) {
-      _matchesDashboardKey.currentState?.fetchMatches();
+    if (index == 2) {
+      // Centro - Crear partido
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CreateMatchScreen()),
+      );
+      return;
     }
+    
+    // Mapear índices: 0=Home, 1=Matches, 2=Create(skip), 3=Leagues, 4=Profile
+    // A índices de pantalla: 0=Home, 1=Matches, 2=Leagues, 3=Profile
+    int screenIndex;
+    if (index < 2) {
+      screenIndex = index; // 0=Home, 1=Matches
+    } else {
+      screenIndex = index - 1; // 3=Leagues(2), 4=Profile(3)
+    }
+    
+    setState(() {
+      _selectedIndex = screenIndex;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      backgroundColor: AppTheme.backgroundDark,
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: _selectedIndex == 0
-        ? FloatingActionButton(
-            onPressed: _navigateToCreateMatch,
-            backgroundColor: AppTheme.primaryColor,
-            child: const Icon(Icons.add, color: Colors.white),
-            elevation: 2.0,
-            tooltip: 'Crear encuentro',
-          )
-        : _selectedIndex == 1
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/create-team');
-              },
-              backgroundColor: AppTheme.primaryColor,
-              child: const Icon(Icons.group_add, color: Colors.white),
-              elevation: 2.0,
-              tooltip: 'Crear equipo',
-            )
-          : null, // No FAB para otras pantallas
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildCustomBottomNav(),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Hey,',
-            style: TextStyle(fontSize: 14, color: AppTheme.secondaryText),
-          ),
-          Text(
-            _userName, // Muestra el nombre real del usuario
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryText),
+  Widget _buildCustomBottomNav() {
+    return Container(
+      height: 70,
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
-      actions: [
-        PopupMenuButton(
-          icon: const Icon(Icons.more_vert, color: AppTheme.primaryText),
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'join_match',
-              child: Row(
-                children: [
-                  Icon(Icons.link, color: AppTheme.primaryColor),
-                  SizedBox(width: 8),
-                  Text('Unirse a encuentro'),
-                ],
-              ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(Icons.home, 'Home', 0),
+          _buildNavItem(Icons.sports_soccer, 'Matches', 1),
+          _buildCenterButton(),
+          _buildNavItem(Icons.emoji_events, 'Leagues', 3),
+          _buildNavItem(Icons.person, 'Profile', 4),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int navIndex) {
+    // Calcular el índice de pantalla real
+    int screenIndex;
+    if (navIndex < 2) {
+      screenIndex = navIndex;
+    } else {
+      screenIndex = navIndex - 1;
+    }
+    
+    final isSelected = _selectedIndex == screenIndex;
+    
+    return GestureDetector(
+      onTap: () => _onItemTapped(navIndex),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppTheme.primaryOrange : AppTheme.tertiaryText,
+              size: 26,
             ),
-            const PopupMenuItem(
-              value: 'league_standings',
-              child: Row(
-                children: [
-                  Icon(Icons.leaderboard, color: AppTheme.primaryColor),
-                  SizedBox(width: 8),
-                  Text('Clasificación de ligas'),
-                ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isSelected ? AppTheme.primaryOrange : AppTheme.tertiaryText,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],
-          onSelected: (value) {
-            if (value == 'join_match') {
-              Navigator.pushNamed(context, '/join-match');
-            } else if (value == 'league_standings') {
-              Navigator.pushNamed(context, '/league-standings');
-            }
-          },
         ),
-        IconButton(
-          icon: const Icon(Icons.notifications, color: AppTheme.primaryText),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const TeamInvitationsScreen()),
-            );
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: GestureDetector(
-            onTap: () => _onItemTapped(3),
-            child: const CircleAvatar(
-              backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
+      ),
+    );
+  }
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = screenIndex;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppTheme.primaryOrange : AppTheme.tertiaryText,
+              size: 26,
             ),
-          ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isSelected ? AppTheme.primaryOrange : AppTheme.tertiaryText,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8.0,
-      color: AppTheme.cardBackground,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _buildNavItem(icon: Icons.home, index: 0),
-          _buildNavItem(icon: Icons.people, index: 1),
-          const SizedBox(width: 40),
-          _buildNavItem(icon: Icons.leaderboard, index: 2),
-          _buildNavItem(icon: Icons.person_outline, index: 3),
-        ],
       ),
     );
   }
 
-  Widget _buildNavItem({required IconData icon, required int index}) {
-    return IconButton(
-      icon: Icon(
-        icon,
-        color: _selectedIndex == index ? AppTheme.primaryColor : AppTheme.secondaryText,
-        size: 28,
+  Widget _buildCenterButton() {
+    return GestureDetector(
+      onTap: () => _onItemTapped(2),
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          gradient: AppTheme.orangeGradient,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryOrange.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 32,
+        ),
       ),
-      onPressed: () => _onItemTapped(index),
     );
   }
 }

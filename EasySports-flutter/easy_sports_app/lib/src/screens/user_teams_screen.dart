@@ -81,7 +81,7 @@ class UserTeamsScreenState extends State<UserTeamsScreen> {
             children: [
               const Text('Mis Equipos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               IconButton(
-                icon: const Icon(Icons.add_circle, color: AppTheme.primaryColor, size: 30),
+                icon: const Icon(Icons.add_circle, color: AppTheme.primaryOrange, size: 30),
                 onPressed: _navigateToCreateTeam,
                 tooltip: 'Crear Equipo',
               ),
@@ -105,7 +105,7 @@ class UserTeamsScreenState extends State<UserTeamsScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
                             margin: const EdgeInsets.symmetric(vertical: 8.0),
                             child: ListTile(
-                              leading: const Icon(Icons.shield, color: AppTheme.primaryColor, size: 40),
+                              leading: const Icon(Icons.shield, color: AppTheme.primaryOrange, size: 40),
                               title: Text(team.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text('Deporte: ${team.deporte}', style: const TextStyle(color: AppTheme.secondaryText)),
                               trailing: const Icon(Icons.arrow_forward_ios, color: AppTheme.secondaryText),

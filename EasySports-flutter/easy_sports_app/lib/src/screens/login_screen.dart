@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
+import 'package:easy_sports_app/src/widgets/sport_components.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
@@ -15,7 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  // final _apiService = ApiService(); // Eliminado
   bool _isLoading = false;
 
   @override
@@ -33,19 +32,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         await context.read<AuthProvider>().login(
-              _emailController.text,
+              _emailController.text.trim(),
               _passwordController.text,
             );
-        // La navegación se maneja en el main.dart con el Consumer, 
-        // pero si necesitamos cerrar el bottom sheet o navegar explícitamente:
         if (mounted) {
-           Navigator.pop(context); // Cerrar el bottom sheet si está abierto
-           // No es necesario pushReplacementNamed si el main.dart redirige por estado
+           Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al iniciar sesión: ${e.toString()}')),
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: AppTheme.errorRed,
+            ),
           );
         }
       } finally {
@@ -62,78 +61,105 @@ class _LoginScreenState extends State<LoginScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SingleChildScrollView(
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           left: 24,
           right: 24,
           top: 24,
         ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Bienvenido de nuevo',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Inicia sesión para continuar',
-                style: TextStyle(fontSize: 16, color: AppTheme.secondaryText),
-              ),
-              const SizedBox(height: 24),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty || !value.contains('@')) {
-                    return 'Por favor, introduce un email válido';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty || value.length < 5) {
-                    return 'La contraseña debe tener al menos 5 caracteres'; // Ajustado para seeds
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24.0),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('Iniciar Sesión'),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Indicador de arrastre
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.tertiaryText,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                     Navigator.pop(context); // Close the sheet
-                     Navigator.pushNamed(context, '/register');
-                  },
-                  child: const Text(
-                    '¿No tienes cuenta? Regístrate',
-                     style: TextStyle(color: AppTheme.primaryColor),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
+                const Text(
+                  'Bienvenido',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Inicia sesión para continuar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.secondaryText,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email_outlined, color: AppTheme.secondaryText),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty || !value.contains('@')) {
+                      return 'Introduce un email válido';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña',
+                    prefixIcon: Icon(Icons.lock_outline, color: AppTheme.secondaryText),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty || value.length < 5) {
+                      return 'La contraseña debe tener al menos 5 caracteres';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 32),
+                PrimaryButton(
+                  text: 'Iniciar Sesión',
+                  onPressed: _login,
+                  isLoading: _isLoading,
+                  icon: Icons.arrow_forward,
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                       Navigator.pop(context);
+                       Navigator.pushNamed(context, '/register');
+                    },
+                    child: const Text(
+                      '¿No tienes cuenta? Regístrate',
+                       style: TextStyle(color: AppTheme.primaryOrange),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -146,12 +172,22 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // Hero Image con gradiente
           Image.asset(
             'assets/images/cr7.png',
             fit: BoxFit.cover,
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withOpacity(0.5),
             colorBlendMode: BlendMode.darken,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback si no existe la imagen
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: AppTheme.darkGradient,
+                ),
+              );
+            },
           ),
+          // Gradiente oscuro desde abajo
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -159,50 +195,60 @@ class _LoginScreenState extends State<LoginScreen> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.8),
-                  Colors.black,
+                  AppTheme.backgroundDark.withOpacity(0.7),
+                  AppTheme.backgroundDark,
                 ],
-                stops: const [0.4, 0.7, 1.0],
+                stops: const [0.3, 0.6, 1.0],
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'TU PASIÓN, TUS REGLAS,\nTU JUEGO',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.2,
+          // Contenido
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Logo o badge pequeño
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryOrange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.primaryOrange, width: 1),
+                    ),
+                    child: const Text(
+                      'Stream Sports Without Limits',
+                      style: TextStyle(
+                        color: AppTheme.primaryOrange,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'La plataforma para organizar y unirte a partidos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.8),
+                  const SizedBox(height: 16),
+                  // Título principal
+                  const Text(
+                    'NEVER MISS A\nMOMENT OF\nTHE GAME',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: 1.2,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _showLoginSheet,
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Empezar'),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 18),
-                    ],
+                  const SizedBox(height: 32),
+                  // Botón principal
+                  PrimaryButton(
+                    text: 'Get Started',
+                    onPressed: _showLoginSheet,
+                    icon: Icons.arrow_forward,
                   ),
-                ),
-                const SizedBox(height: 40),
-              ],
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           )
         ],

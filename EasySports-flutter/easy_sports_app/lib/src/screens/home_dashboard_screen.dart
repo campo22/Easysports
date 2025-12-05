@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/match.dart';
 import 'package:easy_sports_app/src/screens/create_match_screen.dart';
-import 'package:easy_sports_app/src/screens/join_match_screen.dart';
 import 'package:easy_sports_app/src/screens/match_detail_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
+import 'package:easy_sports_app/src/widgets/sport_components.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:easy_sports_app/src/providers/auth_provider.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -18,9 +20,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   final ApiService _apiService = ApiService();
   List<Match> _matches = [];
   bool _isLoading = true;
-  List<String> _sports = ['All', 'Fútbol', 'Padel', 'Baloncesto', 'Tenis'];
   int _selectedSportIndex = 0;
   String? _errorMessage;
+
+  final List<Map<String, dynamic>> _sports = [
+    {'name': 'ALL', 'icon': Icons.sports},
+    {'name': 'FOOTBALL', 'icon': Icons.sports_soccer},
+    {'name': 'TENNIS', 'icon': Icons.sports_tennis},
+    {'name': 'BASKETBALL', 'icon': Icons.sports_basketball},
+    {'name': 'VOLLEYBALL', 'icon': Icons.sports_volleyball},
+  ];
 
   @override
   void initState() {
@@ -38,14 +47,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       final response = await _apiService.getPartidos();
       if (response.statusCode == 200) {
         final jsonData = json.decode(utf8.decode(response.bodyBytes));
-        // El backend devuelve una respuesta paginada con la estructura { content: [...] }
         final List<dynamic> matchesList = jsonData['content'] ?? [];
         setState(() {
           _matches = matchesList.map((matchJson) => Match.fromJson(matchJson)).toList();
         });
       } else {
         setState(() {
-          _errorMessage = 'Error del servidor: ${response.statusCode}. ${response.body}';
+          _errorMessage = 'Error del servidor: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -59,447 +67,351 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     }
   }
 
+  List<Match> get _filteredMatches {
+    if (_selectedSportIndex == 0) return _matches;
+    final sportName = _sports[_selectedSportIndex]['name'].toString();
+    return _matches.where((m) => m.deporte.toUpperCase().contains(sportName)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userName = context.watch<AuthProvider>().userName ?? 'Usuario';
+    
     return Scaffold(
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                        const SizedBox(height: 16),
-                        Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _fetchMatches,
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _fetchMatches,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.only(bottom: 80), // Espacio para FAB
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Título principal
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Ready to Play?',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryText,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // Botones principales
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 56,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const CreateMatchScreen(),
-                                        ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.primaryColor,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: 3,
-                                      shadowColor: AppTheme.primaryColor.withOpacity(0.3),
-                                    ),
-                                    child: const Text(
-                                      'Create a Match',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 56,
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      Navigator.pushNamed(context, '/join-match');
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: AppTheme.cardBackground,
-                                      foregroundColor: AppTheme.primaryColor,
-                                      side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.5)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Join a Match',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // Filtros de deportes
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  for (int i = 0; i < _sports.length; i++)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 8.0),
-                                      child: FilterChip(
-                                        label: Text(_sports[i]),
-                                        selected: _selectedSportIndex == i,
-                                        selectedColor: AppTheme.primaryColor,
-                                        backgroundColor: AppTheme.cardBackground,
-                                        checkmarkColor: Colors.white,
-                                        labelStyle: TextStyle(
-                                          color: _selectedSportIndex == i 
-                                              ? Colors.white 
-                                              : AppTheme.primaryText,
-                                        ),
-                                        onSelected: (selected) {
-                                          setState(() {
-                                            _selectedSportIndex = selected ? i : 0;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          
-                          // Título "Your Next Matches"
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                            child: Text(
-                              'Your Next Matches',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryText,
-                              ),
-                            ),
-                          ),
-                          
-                          // Lista de partidos
-                          _matches.isEmpty
-                              ? const Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: Text(
-                                      'No matches available',
-                                      style: TextStyle(color: AppTheme.secondaryText),
-                                    ),
-                                  ),
-                                )
-                              : ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: _matches.length,
-                                  itemBuilder: (context, index) {
-                                    final match = _matches[index];
-                                    return _buildMatchCard(match);
-                                  },
-                                ),
-                          
-                          // Player Spotlight (solo un ejemplo visual)
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Player Spotlight',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryText,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  height: 200,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    image: const DecorationImage(
-                                      image: NetworkImage('https://i.pravatar.cc/600?img=3'),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(16),
-                                          gradient: LinearGradient(
-                                            begin: Alignment.bottomCenter,
-                                            end: Alignment.topCenter,
-                                            colors: [
-                                              Colors.black.withOpacity(0.7),
-                                              Colors.transparent,
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const Positioned(
-                                        bottom: 16,
-                                        left: 16,
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Alex Morgan',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              '12 Goals • 8 Assists',
-                                              style: TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // League Standings (ejemplo)
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'League Standings',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryText,
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pushNamed(context, '/league-standings');
-                                      },
-                                      child: const Text(
-                                        'View Full Table',
-                                        style: TextStyle(
-                                          color: AppTheme.primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.cardBackground,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Column(
-                                    children: const [
-                                      _StandingsRow(position: '1', team: 'FC Barcelona', points: '78'),
-                                      Divider(height: 1, color: AppTheme.background),
-                                      _StandingsRow(position: '2', team: 'Real Madrid', points: '75'),
-                                      Divider(height: 1, color: AppTheme.background),
-                                      _StandingsRow(position: '3', team: 'Atletico Madrid', points: '72'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.darkGradient,
+        ),
+        child: SafeArea(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
+              : _errorMessage != null
+                  ? _buildErrorState()
+                  : RefreshIndicator(
+                      onRefresh: _fetchMatches,
+                      color: AppTheme.primaryOrange,
+                      child: CustomScrollView(
+                        slivers: [
+                          _buildHeader(userName),
+                          _buildCategories(),
+                          _buildTopLeadersSection(),
+                          _buildMatchesSection(),
                         ],
                       ),
                     ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateMatchScreen()),
+          );
+        },
+        backgroundColor: AppTheme.primaryOrange,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Create Match', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 60),
+          const SizedBox(height: 16),
+          Text(_errorMessage!, style: const TextStyle(fontSize: 16, color: AppTheme.secondaryText)),
+          const SizedBox(height: 16),
+          PrimaryButton(
+            text: 'Reintentar',
+            onPressed: _fetchMatches,
+          ),
+        ],
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildHeader(String userName) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hey',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.secondaryText,
                   ),
+                ),
+                Text(
+                  userName,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: AppTheme.primaryText),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildCategories() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 100,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: _sports.length,
+          itemBuilder: (context, index) {
+            final sport = _sports[index];
+            return Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: SportCategoryIcon(
+                icon: sport['icon'] as IconData,
+                label: sport['name'] as String,
+                isSelected: _selectedSportIndex == index,
+                onTap: () {
+                  setState(() {
+                    _selectedSportIndex = index;
+                  });
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildTopLeadersSection() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Top Leaders in Soccer',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryText,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SportCard(
+              onTap: () {},
+              child: Row(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: const DecorationImage(
+                        image: NetworkImage('https://i.pravatar.cc/150?img=12'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Top Scorer',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.secondaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Alex Morgan',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatChip('12 Goals'),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildStatChip('8 Assists'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: PrimaryButton(
+                      text: 'Watch',
+                      onPressed: () {},
+                      icon: Icons.play_arrow,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryOrange.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          color: AppTheme.primaryOrange,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildMatchesSection() {
+    final matches = _filteredMatches;
+    
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Next Matches',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryText,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (matches.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Text(
+                    'No matches available',
+                    style: TextStyle(color: AppTheme.secondaryText),
+                  ),
+                ),
+              )
+            else
+              ...matches.map((match) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildMatchCard(match),
+              )),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMatchCard(Match match) {
-    String sportIcon = 'sports_soccer';
-    if (match.deporte.toLowerCase().contains('baloncesto') || match.deporte.toLowerCase().contains('basket')) {
-      sportIcon = 'sports_basketball';
-    } else if (match.deporte.toLowerCase().contains('tenis')) {
-      sportIcon = 'sports_tennis';
-    } else if (match.deporte.toLowerCase().contains('voley')) {
-      sportIcon = 'sports_volleyball';
-    }
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Card(
-        color: AppTheme.cardBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MatchDetailScreen(match: match),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+    return SportCard(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MatchDetailScreen(match: match),
+          ),
+        );
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryOrange.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getSportIcon(match.deporte),
+              color: AppTheme.primaryOrange,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  _getSportIcon(sportIcon),
-                  color: AppTheme.primaryColor,
-                  size: 32,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        match.tipo == 'FORMAL' 
-                          ? (match.equipoLocalId != null && match.equipoVisitanteId != null 
-                              ? 'Equipo ${match.equipoLocalId} vs Equipo ${match.equipoVisitanteId}'
-                              : 'Partido Formal')
-                          : 'Partido Casual',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryText,
-                        ),
-                      ),
-                      Text(
-                        '${match.fechaProgramada.day}/${match.fechaProgramada.month}, ${match.fechaProgramada.hour}:${match.fechaProgramada.minute.toString().padLeft(2, '0')} - ${match.nombreCanchaTexto ?? 'Ubicación no especificada'}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.secondaryText,
-                        ),
-                      ),
-                    ],
+                Text(
+                  match.tipo == 'FORMAL' ? 'Partido Formal' : 'Partido Casual',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppTheme.primaryText,
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppTheme.secondaryText,
+                const SizedBox(height: 4),
+                Text(
+                  '${match.fechaProgramada.day}/${match.fechaProgramada.month} - ${match.nombreCanchaTexto ?? 'TBD'}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.secondaryText,
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  IconData _getSportIcon(String sportIcon) {
-    switch (sportIcon) {
-      case 'sports_basketball':
-        return Icons.sports_basketball;
-      case 'sports_tennis':
-        return Icons.sports_tennis;
-      case 'sports_volleyball':
-        return Icons.sports_volleyball;
-      default:
-        return Icons.sports_soccer;
-    }
-  }
-}
-
-class _StandingsRow extends StatelessWidget {
-  final String position;
-  final String team;
-  final String points;
-
-  const _StandingsRow({
-    required this.position,
-    required this.team,
-    required this.points,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-      child: Row(
-        children: [
-          Text(
-            position,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.secondaryText,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              team,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryText,
-              ),
-            ),
-          ),
-          Text(
-            points,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryText,
-            ),
+          StatusBadge(
+            text: match.estado,
+            color: match.estado == 'ABIERTO' ? AppTheme.activeGreen : AppTheme.closedRed,
           ),
         ],
       ),
     );
+  }
+
+  IconData _getSportIcon(String deporte) {
+    final sport = deporte.toUpperCase();
+    if (sport.contains('FUTBOL') || sport.contains('SOCCER')) {
+      return Icons.sports_soccer;
+    } else if (sport.contains('BASKET')) {
+      return Icons.sports_basketball;
+    } else if (sport.contains('TENIS')) {
+      return Icons.sports_tennis;
+    } else if (sport.contains('VOLEY')) {
+      return Icons.sports_volleyball;
+    }
+    return Icons.sports;
+  }
+}
+
+extension WidgetExtensions on Widget {
+  Widget constrained({double? width, double? height}) {
+    return SizedBox(width: width, height: height, child: this);
   }
 }

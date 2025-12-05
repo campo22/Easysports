@@ -131,7 +131,7 @@ class _TeamInvitationsScreenState extends State<TeamInvitationsScreen> {
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
                             children: [
-                              const Icon(Icons.group, color: AppTheme.primaryColor, size: 40),
+                              const Icon(Icons.group, color: AppTheme.primaryOrange, size: 40),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(

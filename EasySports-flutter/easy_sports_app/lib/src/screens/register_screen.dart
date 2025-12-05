@@ -1,11 +1,9 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
+import 'package:easy_sports_app/src/widgets/sport_components.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,7 +14,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  // final _apiService = ApiService(); // Eliminado
 
   final _nombreCompletoController = TextEditingController();
   final _emailController = TextEditingController();
@@ -53,26 +50,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
               int.parse(_edadMesesController.text),
             );
         
-        // Si el registro es exitoso y el AuthProvider hace login automático (guarda token),
-        // entonces el estado de autenticación cambiará y el main.dart redirigirá.
-        // Pero aquí queremos quizás mostrar un mensaje de éxito antes.
-        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registro exitoso. Iniciando sesión...')),
+            const SnackBar(
+              content: Text('¡Registro exitoso! Bienvenido'),
+              backgroundColor: AppTheme.successGreen,
+            ),
           );
-          // Navigator.pop(context); // Ya no es necesario volver al login si el provider loguea automáticamente
-          // Si el provider NO loguea automáticamente tras registro, entonces sí pop.
-          // En nuestra implementación de AuthProvider, register llama a _saveToken, así que loguea.
-          // Por lo tanto, cerramos la pantalla de registro para volver al stack principal 
-          // que ahora mostrará Home gracias al Consumer en main.dart
           Navigator.of(context).pop(); 
         }
 
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error en el registro: ${e.toString()}')),
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: AppTheme.errorRed,
+            ),
           );
         }
       } finally {
@@ -88,10 +82,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
-        // El estilo se toma automáticamente del AppTheme
         title: const Text('Crear Cuenta'),
-        centerTitle: true,
+        backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -102,20 +96,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               const Text(
                 'Únete a la comunidad',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryText,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Completa tus datos para empezar',
-                style: TextStyle(fontSize: 16, color: AppTheme.secondaryText),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.secondaryText,
+                ),
               ),
               const SizedBox(height: 32.0),
               TextFormField(
                 controller: _nombreCompletoController,
-                decoration: const InputDecoration(labelText: 'Nombre Completo'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre Completo',
+                  prefixIcon: Icon(Icons.person_outline, color: AppTheme.secondaryText),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor, introduce tu nombre completo';
+                    return 'Introduce tu nombre completo';
                   }
                   return null;
                 },
@@ -123,11 +127,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppTheme.secondaryText),
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty || !value.contains('@')) {
-                    return 'Por favor, introduce un email válido';
+                    return 'Introduce un email válido';
                   }
                   return null;
                 },
@@ -135,7 +142,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña',
+                  prefixIcon: Icon(Icons.lock_outline, color: AppTheme.secondaryText),
+                ),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty || value.length < 6) {
@@ -149,11 +159,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 value: _selectedSexo,
                 decoration: const InputDecoration(
                   labelText: 'Sexo',
+                  prefixIcon: Icon(Icons.wc, color: AppTheme.secondaryText),
                 ),
+                dropdownColor: AppTheme.cardBackground,
                 items: ['HOMBRE', 'MUJER'].map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(value, style: const TextStyle(color: AppTheme.primaryText)),
                   );
                 }).toList(),
                 onChanged: (newValue) {
@@ -169,7 +181,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _edadAniosController,
-                      decoration: const InputDecoration(labelText: 'Años'),
+                      decoration: const InputDecoration(
+                        labelText: 'Años',
+                        prefixIcon: Icon(Icons.cake_outlined, color: AppTheme.secondaryText),
+                      ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
@@ -183,7 +198,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _edadMesesController,
-                      decoration: const InputDecoration(labelText: 'Meses'),
+                      decoration: const InputDecoration(
+                        labelText: 'Meses',
+                        prefixIcon: Icon(Icons.calendar_month, color: AppTheme.secondaryText),
+                      ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
@@ -197,12 +215,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
               const SizedBox(height: 32.0),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _register,
-                      child: const Text('Crear mi Cuenta'),
-                    ),
+              PrimaryButton(
+                text: 'Crear mi Cuenta',
+                onPressed: _register,
+                isLoading: _isLoading,
+                icon: Icons.arrow_forward,
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    '¿Ya tienes cuenta? Inicia sesión',
+                    style: TextStyle(color: AppTheme.primaryOrange),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

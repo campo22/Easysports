@@ -209,7 +209,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
         backgroundColor: MaterialStateProperty.resolveWith<Color>(
           (Set<MaterialState> states) {
             if (states.contains(MaterialState.selected)) {
-              return AppTheme.background;
+              return AppTheme.backgroundDark;
             }
             return AppTheme.cardBackground;
           },
@@ -217,7 +217,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
         foregroundColor: MaterialStateProperty.resolveWith<Color>(
           (Set<MaterialState> states) {
             if (states.contains(MaterialState.selected)) {
-              return AppTheme.primaryColor;
+              return AppTheme.primaryOrange;
             }
             return AppTheme.primaryText;
           },

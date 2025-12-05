@@ -3,9 +3,11 @@ import 'package:easy_sports_app/src/models/match.dart';
 import 'package:easy_sports_app/src/screens/register_result_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
+import 'package:easy_sports_app/src/widgets/sport_components.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class MatchDetailScreen extends StatefulWidget {
   final Match match;
@@ -18,12 +20,9 @@ class MatchDetailScreen extends StatefulWidget {
 
 class _MatchDetailScreenState extends State<MatchDetailScreen> {
   final ApiService _apiService = ApiService();
-  // final AuthService _authService = AuthService(); // Eliminado
   late Match _currentMatch;
-  List<dynamic> _participants = [];
   bool _isLoading = true;
   bool _isCreator = false;
-  int? _currentUserId;
   String? _errorMessage;
 
   @override
@@ -39,75 +38,29 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      // El ID puede venir como int o string del token, aseguramos conversión si es necesario
-      final userIdDynamic = authProvider.userId; 
+      final userIdDynamic = authProvider.userId;
+      int? currentUserId;
+      
       if (userIdDynamic is int) {
-        _currentUserId = userIdDynamic;
+        currentUserId = userIdDynamic;
       } else if (userIdDynamic is String) {
-        _currentUserId = int.tryParse(userIdDynamic);
+        currentUserId = int.tryParse(userIdDynamic);
       }
       
-      _isCreator = _currentMatch.creadorId == _currentUserId;
+      _isCreator = _currentMatch.creadorId == currentUserId;
 
-      // Nota: Este endpoint no existe en el backend actual (v1.0)
-      // El backend no tiene un endpoint específico para obtener participantes por ID de encuentro
-      // Se podría obtener el encuentro con sus detalles usando getEncuentroPorCodigo
       final response = await _apiService.getEncuentroPorCodigo(_currentMatch.codigo);
       if (response.statusCode == 200) {
-        // Procesar la respuesta del encuentro
-        final contentType = response.headers['content-type'];
-        if (contentType != null && contentType.contains('application/json')) {
-          final jsonData = jsonDecode(response.body);
-          // Actualizar el encuentro actual con los datos nuevos
-          setState(() {
-            _currentMatch = Match.fromJson(jsonData);
-          });
-        } else {
-          setState(() {
-            _errorMessage = 'Formato de respuesta inesperado';
-          });
-        }
-      } else {
-        // Manejar respuestas de error
-        final contentType = response.headers['content-type'];
-        String errorMessage = 'Error al cargar los detalles del encuentro';
-
-        if (contentType != null && contentType.contains('application/json')) {
-          // Si es JSON, extraer el mensaje de error
-          final errorData = jsonDecode(response.body);
-          errorMessage = errorData['message'] ?? 'Error en la obtención de datos';
-        } else {
-          // Si es texto plano, usar el cuerpo de la respuesta
-          errorMessage = response.body.isNotEmpty
-            ? response.body
-            : 'Código de error: ${response.statusCode}';
-        }
-
+        final jsonData = jsonDecode(response.body);
         setState(() {
-          _errorMessage = errorMessage;
+          _currentMatch = Match.fromJson(jsonData);
         });
       }
     } catch (e) {
-      // Manejar error
+      setState(() => _errorMessage = 'Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  Future<void> _registerResult(Map<String, dynamic> resultData) async {
-    // ... (lógica existente)
-  }
-
-  void _showRegisterResultDialog() {
-    // ... (lógica existente)
-  }
-
-  void _showFormalResultDialog() {
-    // ... (lógica existente)
-  }
-
-  void _showCasualResultDialog() {
-    // ... (lógica existente)
   }
 
   @override
@@ -115,182 +68,360 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     final bool canRegisterResult = _isCreator && _currentMatch.estado != 'FINALIZADO';
 
     return Scaffold(
-      appBar: AppBar(title: Text(_currentMatch.codigo)),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                      const SizedBox(height: 16),
-                      Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetchMatchDetails,
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _fetchMatchDetails,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Card(
-                          color: AppTheme.cardBackground,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.0),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        _currentMatch.tipo == 'FORMAL'
-                                            ? '${_currentMatch.equipoLocalId != null ? 'Equipo Local' : 'Equipo'} vs ${_currentMatch.equipoVisitanteId != null ? 'Equipo Visitante' : 'Equipo'}'
-                                            : 'Partido Casual',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _currentMatch.estado == 'FINALIZADO'
-                                            ? Colors.green.withOpacity(0.2)
-                                            : Colors.orange.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        _currentMatch.estado,
-                                        style: TextStyle(
-                                          color: _currentMatch.estado == 'FINALIZADO'
-                                              ? Colors.green
-                                              : Colors.orange,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDetailRow(
-                                  Icons.sports_soccer,
-                                  'Deporte',
-                                  _currentMatch.deporte,
-                                ),
-                                _buildDetailRow(
-                                  Icons.calendar_today,
-                                  'Fecha',
-                                  _formatDate(_currentMatch.fechaProgramada),
-                                ),
-                                _buildDetailRow(
-                                  Icons.location_on,
-                                  'Ubicación',
-                                  _currentMatch.nombreCanchaTexto ?? 'No especificada',
-                                ),
-                                _buildDetailRow(
-                                  Icons.people,
-                                  'Jugadores',
-                                  '${_currentMatch.jugadoresActuales}/${_currentMatch.maxJugadores}',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Participantes',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          height: 200, // Altura fija para la lista de participantes
-                          child: _participants.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'No hay participantes aún',
-                                    style: TextStyle(color: AppTheme.secondaryText),
-                                  ),
-                                )
-                              : ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(), // Para evitar conflictos de scroll
-                                  itemCount: _participants.length,
-                                  itemBuilder: (context, index) {
-                                    final participant = _participants[index];
-                                    return ListTile(
-                                      leading: const CircleAvatar(
-                                        backgroundImage: NetworkImage('https://i.pravatar.cc/50'),
-                                      ),
-                                      title: Text(
-                                        participant['nombreCompleto'] ?? 'Usuario ${index + 1}',
-                                        style: const TextStyle(fontSize: 14),
-                                      ),
-                                      trailing: participant['esCreador'] == true
-                                          ? const Icon(Icons.star, color: AppTheme.primaryColor)
-                                          : null,
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-      floatingActionButton: canRegisterResult
-          ? FloatingActionButton.extended(
+      backgroundColor: AppTheme.backgroundDark,
+      appBar: AppBar(
+        title: Text('Match #${_currentMatch.codigo}'),
+        backgroundColor: Colors.transparent,
+        actions: [
+          if (canRegisterResult)
+            IconButton(
+              icon: const Icon(Icons.edit_note, color: AppTheme.primaryOrange),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => RegisterResultScreen(match: _currentMatch),
                   ),
-                );
+                ).then((_) => _fetchMatchDetails());
               },
-              label: const Text('Registrar Resultado'),
-              icon: const Icon(Icons.check),
-            )
-          : null,
+            ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
+          : _errorMessage != null
+              ? _buildErrorState()
+              : RefreshIndicator(
+                  onRefresh: _fetchMatchDetails,
+                  color: AppTheme.primaryOrange,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildMatchHeader(),
+                        const SizedBox(height: 20),
+                        _buildMatchInfo(),
+                        const SizedBox(height: 20),
+                        if (_currentMatch.estado == 'FINALIZADO' && 
+                            _currentMatch.golesLocal != null)
+                          _buildResultSection(),
+                        const SizedBox(height: 20),
+                        _buildDetailsSection(),
+                      ],
+                    ),
+                  ),
+                ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: AppTheme.primaryText),
+          const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 60),
+          const SizedBox(height: 16),
+          Text(_errorMessage!, style: const TextStyle(color: AppTheme.secondaryText)),
+          const SizedBox(height: 16),
+          PrimaryButton(
+            text: 'Reintentar',
+            onPressed: _fetchMatchDetails,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildMatchHeader() {
+    return SportCard(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryOrange.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _getSportIcon(_currentMatch.deporte),
+                  color: AppTheme.primaryOrange,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _currentMatch.tipo == 'FORMAL' ? 'Partido Formal' : 'Partido Casual',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _currentMatch.deporte.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(
+                text: _currentMatch.estado,
+                color: _currentMatch.estado == 'ABIERTO' 
+                    ? AppTheme.activeGreen 
+                    : _currentMatch.estado == 'FINALIZADO'
+                        ? AppTheme.closedRed
+                        : AppTheme.goldAccent,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatchInfo() {
+    final dateFormat = DateFormat('dd/MM/yyyy - HH:mm');
+    
+    return SportCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Información del Partido',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(Icons.calendar_today, 'Fecha', 
+              dateFormat.format(_currentMatch.fechaProgramada)),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.location_on, 'Ubicación', 
+              _currentMatch.nombreCanchaTexto ?? 'Por definir'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.people, 'Jugadores', 
+              '${_currentMatch.jugadoresActuales}/${_currentMatch.maxJugadores}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.primaryOrange, size: 20),
+        const SizedBox(width: 12),
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppTheme.secondaryText,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryText,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultSection() {
+    return SportCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Resultado Final',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildScoreBox('Local', _currentMatch.golesLocal ?? 0),
+              const SizedBox(width: 20),
+              const Text(
+                '-',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryOrange,
+                ),
+              ),
+              const SizedBox(width: 20),
+              _buildScoreBox('Visitante', _currentMatch.golesVisitante ?? 0),
+            ],
+          ),
+          if (_currentMatch.comentarios != null) ...[
+            const SizedBox(height: 16),
+            const Divider(color: AppTheme.cardBackgroundLight),
+            const SizedBox(height: 16),
+            const Text(
+              'Comentarios:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.secondaryText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _currentMatch.comentarios!,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppTheme.primaryText,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreBox(String team, int score) {
+    return Column(
+      children: [
+        Text(
+          team,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppTheme.secondaryText,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryOrange.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.primaryOrange, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              score.toString(),
+              style: const TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryOrange,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsSection() {
+    return SportCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Detalles Adicionales',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow('Código', _currentMatch.codigo),
+          _buildDetailRow('Tipo', _currentMatch.tipo),
+          _buildDetailRow('Estado', _currentMatch.estado),
+          if (_isCreator)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryOrange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.primaryOrange.withOpacity(0.3)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.star, color: AppTheme.goldAccent, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Eres el creador de este partido',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primaryOrange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.secondaryText,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getSportIcon(String deporte) {
+    final sport = deporte.toUpperCase();
+    if (sport.contains('FUTBOL') || sport.contains('SOCCER')) {
+      return Icons.sports_soccer;
+    } else if (sport.contains('BASKET')) {
+      return Icons.sports_basketball;
+    } else if (sport.contains('TENIS')) {
+      return Icons.sports_tennis;
+    } else if (sport.contains('VOLEY')) {
+      return Icons.sports_volleyball;
+    }
+    return Icons.sports;
   }
 }

@@ -143,7 +143,7 @@ class _LeagueStandingsScreenState extends State<LeagueStandingsScreen> {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor,
+                                    color: AppTheme.primaryOrange,
                                     borderRadius: BorderRadius.circular(18),
                                   ),
                                   child: Center(

@@ -66,7 +66,7 @@ class _LigasScreenState extends State<LigasScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
                         child: ListTile(
-                          leading: const Icon(Icons.emoji_events, color: AppTheme.primaryColor, size: 40),
+                          leading: const Icon(Icons.emoji_events, color: AppTheme.primaryOrange, size: 40),
                           title: Text(liga.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text('Deporte: ${liga.deporte}', style: const TextStyle(color: AppTheme.secondaryText)),
                           trailing: const Icon(Icons.arrow_forward_ios, color: AppTheme.secondaryText),
@@ -149,7 +149,7 @@ class _TablaPosicionesScreenState extends State<TablaPosicionesScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: AppTheme.primaryOrange,
                         child: Text((index + 1).toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                       title: Text(fila.nombreEquipo, style: const TextStyle(fontWeight: FontWeight.bold)),

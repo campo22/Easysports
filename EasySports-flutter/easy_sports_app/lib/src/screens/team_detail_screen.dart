@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:easy_sports_app/src/models/team.dart';
 import 'package:easy_sports_app/src/models/team_member.dart';
 import 'package:easy_sports_app/src/screens/edit_team_screen.dart';
@@ -84,7 +83,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                       const Text('Miembros del Equipo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       if (_isCaptain)
                         IconButton(
-                          icon: const Icon(Icons.person_add, color: AppTheme.primaryColor, size: 30),
+                          icon: const Icon(Icons.person_add, color: AppTheme.primaryOrange, size: 30),
                           onPressed: _showInviteDialog,
                           tooltip: 'Invitar Miembro',
                         ),
@@ -144,10 +143,10 @@ class _MemberCard extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: isThisMemberTheCaptain ? AppTheme.primaryColor.withOpacity(0.2) : AppTheme.background,
+                  backgroundColor: isThisMemberTheCaptain ? AppTheme.primaryOrange.withOpacity(0.2) : AppTheme.backgroundDark,
                   child: Text(
                     member.nombreCompleto.isNotEmpty ? member.nombreCompleto.substring(0, 1) : '?',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: isThisMemberTheCaptain ? AppTheme.primaryColor : AppTheme.primaryText),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: isThisMemberTheCaptain ? AppTheme.primaryOrange : AppTheme.primaryText),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -158,7 +157,7 @@ class _MemberCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       member.rol,
-                      style: TextStyle(color: isThisMemberTheCaptain ? AppTheme.primaryColor : AppTheme.secondaryText, fontSize: 12),
+                      style: TextStyle(color: isThisMemberTheCaptain ? AppTheme.primaryOrange : AppTheme.secondaryText, fontSize: 12),
                     ),
                   ],
                 ),
