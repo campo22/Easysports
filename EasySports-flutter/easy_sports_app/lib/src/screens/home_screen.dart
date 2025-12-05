@@ -8,6 +8,8 @@ import 'package:easy_sports_app/src/services/auth_service.dart'; // Importa el s
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
+import 'home_dashboard_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadUserData();
     _screens = <Widget>[
-      MatchesDashboardScreen(key: _matchesDashboardKey),
+      HomeDashboardScreen(),
       const UserTeamsScreen(),
       const LigasScreen(),
       const UserProfileScreen(),
@@ -69,12 +71,25 @@ class _HomeScreenState extends State<HomeScreen> {
         children: _screens,
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToCreateMatch,
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
-        elevation: 2.0,
-      ),
+      floatingActionButton: _selectedIndex == 0
+        ? FloatingActionButton(
+            onPressed: _navigateToCreateMatch,
+            backgroundColor: AppTheme.primaryColor,
+            child: const Icon(Icons.add, color: Colors.white),
+            elevation: 2.0,
+            tooltip: 'Crear encuentro',
+          )
+        : _selectedIndex == 1
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/create-team');
+              },
+              backgroundColor: AppTheme.primaryColor,
+              child: const Icon(Icons.group_add, color: Colors.white),
+              elevation: 2.0,
+              tooltip: 'Crear equipo',
+            )
+          : null, // No FAB para otras pantallas
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
@@ -96,6 +111,38 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
+        PopupMenuButton(
+          icon: const Icon(Icons.more_vert, color: AppTheme.primaryText),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'join_match',
+              child: Row(
+                children: [
+                  Icon(Icons.link, color: AppTheme.primaryColor),
+                  SizedBox(width: 8),
+                  Text('Unirse a encuentro'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'league_standings',
+              child: Row(
+                children: [
+                  Icon(Icons.leaderboard, color: AppTheme.primaryColor),
+                  SizedBox(width: 8),
+                  Text('Clasificación de ligas'),
+                ],
+              ),
+            ),
+          ],
+          onSelected: (value) {
+            if (value == 'join_match') {
+              Navigator.pushNamed(context, '/join-match');
+            } else if (value == 'league_standings') {
+              Navigator.pushNamed(context, '/league-standings');
+            }
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.notifications, color: AppTheme.primaryText),
           onPressed: () {
@@ -127,9 +174,9 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           _buildNavItem(icon: Icons.home, index: 0),
-          _buildNavItem(icon: Icons.shield_outlined, index: 1),
+          _buildNavItem(icon: Icons.people, index: 1),
           const SizedBox(width: 40),
-          _buildNavItem(icon: Icons.star_border, index: 2),
+          _buildNavItem(icon: Icons.leaderboard, index: 2),
           _buildNavItem(icon: Icons.person_outline, index: 3),
         ],
       ),

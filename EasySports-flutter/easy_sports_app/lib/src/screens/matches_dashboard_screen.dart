@@ -155,7 +155,7 @@ class _BetMatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('dd MMMM / hh:mm a').format(match.fechaProgramada);
+    final formattedDate = DateFormat('dd/MM/yyyy - HH:mm').format(match.fechaProgramada);
 
     return Card(
       color: AppTheme.cardBackground,
@@ -163,30 +163,71 @@ class _BetMatchCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: const [
-                    CircleAvatar(backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=1')), // Placeholder
-                    SizedBox(width: 12),
-                    Text('FCB / FC BM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ],
-                ),
-                _StatusChip(status: match.estado),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('\$440 / 2.2', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryText)),
-                Text(formattedDate, style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText)),
-              ],
-            )
-          ],
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20.0),
+          onTap: () {
+            // Navegar a la pantalla de detalle del encuentro
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MatchDetailScreen(match: match),
+              ),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      match.tipo == 'FORMAL'
+                        ? (match.equipoLocalId != null && match.equipoVisitanteId != null
+                            ? 'Equipo ${match.equipoLocalId} vs Equipo ${match.equipoVisitanteId}'
+                            : 'Partido Formal')
+                        : 'Partido Casual',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _StatusChip(status: match.estado),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(Icons.sports_soccer, size: 16, color: AppTheme.primaryColor),
+                  const SizedBox(width: 4),
+                  Text(match.deporte, style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText)),
+                  const SizedBox(width: 12),
+                  const Icon(Icons.location_on, size: 16, color: AppTheme.primaryColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    match.nombreCanchaTexto ?? 'Ubicación no especificada',
+                    style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Jugadores: ${match.jugadoresActuales}/${match.maxJugadores}',
+                      style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText),
+                    ),
+                  ),
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText),
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
