@@ -22,7 +22,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
       setState(() => _isLoading = true);
 
       try {
-        await _apiService.post('equipos', {
+        await _apiService.crearEquipo({
           'nombre': _nombreController.text,
           'deporte': _selectedDeporte,
         });

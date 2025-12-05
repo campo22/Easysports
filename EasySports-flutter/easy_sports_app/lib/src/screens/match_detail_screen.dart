@@ -24,6 +24,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   bool _isLoading = true;
   bool _isCreator = false;
   int? _currentUserId;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -40,14 +41,43 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       _currentUserId = await _authService.getUserId();
       _isCreator = _currentMatch.creadorId == _currentUserId;
 
-      final response = await _apiService.get('encuentros/${_currentMatch.id}/participantes');
+      // Nota: Este endpoint no existe en el backend actual (v1.0)
+      // El backend no tiene un endpoint específico para obtener participantes por ID de encuentro
+      // Se podría obtener el encuentro con sus detalles usando getEncuentroPorCodigo
+      final response = await _apiService.getEncuentroPorCodigo(_currentMatch.codigo);
       if (response.statusCode == 200) {
-        final List<dynamic> jsonResponse = response.body.isEmpty ? [] : jsonDecode(response.body);
-        if (mounted) {
+        // Procesar la respuesta del encuentro
+        final contentType = response.headers['content-type'];
+        if (contentType != null && contentType.contains('application/json')) {
+          final jsonData = jsonDecode(response.body);
+          // Actualizar el encuentro actual con los datos nuevos
           setState(() {
-            _participants = jsonResponse;
+            _currentMatch = Match.fromJson(jsonData);
+          });
+        } else {
+          setState(() {
+            _errorMessage = 'Formato de respuesta inesperado';
           });
         }
+      } else {
+        // Manejar respuestas de error
+        final contentType = response.headers['content-type'];
+        String errorMessage = 'Error al cargar los detalles del encuentro';
+
+        if (contentType != null && contentType.contains('application/json')) {
+          // Si es JSON, extraer el mensaje de error
+          final errorData = jsonDecode(response.body);
+          errorMessage = errorData['message'] ?? 'Error en la obtención de datos';
+        } else {
+          // Si es texto plano, usar el cuerpo de la respuesta
+          errorMessage = response.body.isNotEmpty
+            ? response.body
+            : 'Código de error: ${response.statusCode}';
+        }
+
+        setState(() {
+          _errorMessage = errorMessage;
+        });
       }
     } catch (e) {
       // Manejar error
@@ -80,18 +110,34 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       appBar: AppBar(title: Text(_currentMatch.codigo)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _fetchMatchDetails,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ... (código de detalles existente)
-                  ],
+          : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 60),
+                      const SizedBox(height: 16),
+                      Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _fetchMatchDetails,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _fetchMatchDetails,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ... (código de detalles existente)
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
       floatingActionButton: canRegisterResult
           ? FloatingActionButton.extended(
               onPressed: _showRegisterResultDialog,

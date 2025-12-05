@@ -29,14 +29,26 @@ class UserTeamsScreenState extends State<UserTeamsScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final response = await _apiService.get('equipos/mis-equipos');
+      final response = await _apiService.getMisEquipos();
       if (response.statusCode == 200) {
         // Manejo de cuerpo vacío
         final responseBody = response.body;
-        final List<dynamic> jsonResponse = responseBody.isEmpty ? [] : jsonDecode(responseBody);
+        List<dynamic> teamsList = [];
+
+        if (responseBody.isNotEmpty) {
+          final jsonData = jsonDecode(responseBody);
+          // Verificar si la respuesta tiene estructura paginada como { content: [...] }
+          if (jsonData is Map && jsonData.containsKey('content')) {
+            teamsList = jsonData['content'] ?? [];
+          } else if (jsonData is List) {
+            // Si es directamente un array
+            teamsList = jsonData;
+          }
+        }
+
         if (!mounted) return;
         setState(() {
-          _userTeams = jsonResponse.map((teamJson) => Team.fromJson(teamJson)).toList();
+          _userTeams = teamsList.map((teamJson) => Team.fromJson(teamJson)).toList();
         });
       }
     } catch (e) {

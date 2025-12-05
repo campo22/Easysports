@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       try {
-        final response = await _apiService.post('auth/register', {
+        final response = await _apiService.register({
           'nombreCompleto': _nombreCompletoController.text,
           'email': _emailController.text,
           'password': _passwordController.text,
@@ -58,15 +58,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Navigator.pop(context); // Regresa a la pantalla de login
           }
         } else {
-           final errorData = jsonDecode(response.body);
-           final errorMessage = errorData['message'] ?? 'Error en el registro';
+          // Manejar respuestas de error
+          final contentType = response.headers['content-type'];
+          String errorMessage = 'Error en el registro';
+
+          if (contentType != null && contentType.contains('application/json')) {
+            // Si es JSON, extraer el mensaje de error
+            final errorData = jsonDecode(response.body);
+            errorMessage = errorData['message'] ?? 'Error en el registro';
+          } else {
+            // Si es texto plano, usar el cuerpo de la respuesta
+            errorMessage = response.body.isNotEmpty
+              ? response.body
+              : 'Código de error: ${response.statusCode}';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage)),
           );
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Error de red: $e')),
         );
       } finally {
         if(mounted) {

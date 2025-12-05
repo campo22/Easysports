@@ -58,12 +58,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
       }
 
       try {
-        await _apiService.post('encuentros', body); // Endpoint actualizado
+        await _apiService.crearEncuentro(body);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('¡Encuentro creado con éxito!')),
           );
-          Navigator.pop(context, true); 
+          Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {

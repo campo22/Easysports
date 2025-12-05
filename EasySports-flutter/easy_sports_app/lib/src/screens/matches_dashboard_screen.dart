@@ -33,12 +33,14 @@ class MatchesDashboardScreenState extends State<MatchesDashboardScreen> {
     });
 
     try {
-      final response = await _apiService.get('partidos');
+      final response = await _apiService.getPartidos();
       if (!mounted) return;
       if (response.statusCode == 200) {
-        final List<dynamic> jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
+        final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+        // El backend devuelve una respuesta paginada con la estructura { content: [...] }
+        final List<dynamic> matchesList = jsonData['content'] ?? [];
         setState(() {
-          _matches = jsonResponse.map((matchJson) => Match.fromJson(matchJson)).toList();
+          _matches = matchesList.map((matchJson) => Match.fromJson(matchJson)).toList();
         });
       } else {
         setState(() {
@@ -48,8 +50,7 @@ class MatchesDashboardScreenState extends State<MatchesDashboardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        // --- MENSAJE DE ERROR MEJORADO ---
-        _errorMessage = 'No se pudo conectar al servidor. Asegúrate de que el backend esté funcionando en localhost:8080. Error: $e';
+        _errorMessage = 'No se pudo conectar al servidor. Asegúrate de que el backend esté funcionando. Error: $e';
       });
     } finally {
       if (!mounted) return;
@@ -59,113 +60,106 @@ class MatchesDashboardScreenState extends State<MatchesDashboardScreen> {
     }
   }
 
-  Future<void> _joinMatch(String code) {
-    // ... (código existente)
-    return Future.value();
-  }
-
-  void _showJoinMatchDialog() {
-    // ... (código existente)
-  }
-
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? _buildErrorView()
-              : _buildMatchesView(),
-    );
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _errorMessage != null
+            ? _buildErrorView(_errorMessage!, fetchMatches)
+            : _buildDashboard();
   }
 
-  Widget _buildErrorView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 60),
-            const SizedBox(height: 16),
-            const Text('¡Oops! Algo salió mal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            Text(_errorMessage!, style: const TextStyle(fontSize: 16, color: AppTheme.secondaryText), textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            ElevatedButton(onPressed: fetchMatches, child: const Text('Reintentar')),
-          ],
-        ),
+  Widget _buildDashboard() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCategories(),
+          const SizedBox(height: 24),
+          const _SectionTitle(title: 'Top Leaders in Soccer'),
+          const SizedBox(height: 16),
+          _buildTopLeadersCard(),
+          const SizedBox(height: 24),
+          const _SectionTitle(title: 'Upcoming Matches'),
+          const SizedBox(height: 16),
+          _matches.isEmpty
+              ? const Center(child: Text('No hay partidos disponibles.'))
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _matches.length,
+                  itemBuilder: (context, index) {
+                    return _BetMatchCard(match: _matches[index]);
+                  },
+                ),
+        ],
       ),
     );
   }
 
-  Widget _buildMatchesView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: _matches.isEmpty
-              ? const Center(child: Text('No hay partidos disponibles.'))
-              : RefreshIndicator(
-                  onRefresh: fetchMatches,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: _matches.length,
-                    itemBuilder: (context, index) {
-                      final match = _matches[index];
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MatchDetailScreen(match: match),
-                            ),
-                          );
-                        },
-                        child: _MatchCard(match: match),
-                      );
-                    },
-                  ),
-                ),
-        ),
-      ],
+  Widget _buildCategories() {
+    // Placeholder for categories
+    final categories = ['Football', 'Tennis', 'Basketball', 'Cricket', 'Soccer'];
+    final icons = [Icons.sports_soccer, Icons.sports_tennis, Icons.sports_basketball, Icons.sports_cricket, Icons.sports_volleyball];
+    return SizedBox(
+      height: 80,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Column(
+              children: [
+                CircleAvatar(radius: 25, backgroundColor: AppTheme.cardBackground, child: Icon(icons[index], color: AppTheme.primaryColor)),
+                const SizedBox(height: 8),
+                Text(categories[index], style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText)),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildTopLeadersCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        image: const DecorationImage(
+          image: NetworkImage('https://i.pravatar.cc/400?img=3'), // Placeholder
+          fit: BoxFit.cover,
+          opacity: 0.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Partidos Disponibles',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          Row(
-            children: [
-              IconButton(icon: const Icon(Icons.input), onPressed: _showJoinMatchDialog, tooltip: 'Unirse por código'),
-              IconButton(icon: const Icon(Icons.refresh), onPressed: fetchMatches, tooltip: 'Refrescar'),
-            ],
-          )
+          const Text('Watch Now', style: TextStyle(color: AppTheme.primaryColor)),
+          const SizedBox(height: 8),
+          const Text('Top players battling it out', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: () {}, child: const Text('Watch Now →')),
         ],
       ),
     );
   }
 }
 
-class _MatchCard extends StatelessWidget {
+class _BetMatchCard extends StatelessWidget {
   final Match match;
-  const _MatchCard({required this.match});
+  const _BetMatchCard({required this.match});
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('dd MMMM / h:mm a').format(match.fechaProgramada);
+    final formattedDate = DateFormat('dd MMMM / hh:mm a').format(match.fechaProgramada);
 
     return Card(
       color: AppTheme.cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -174,9 +168,24 @@ class _MatchCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ... (código de la tarjeta)
+                Row(
+                  children: const [
+                    CircleAvatar(backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=1')), // Placeholder
+                    SizedBox(width: 12),
+                    Text('FCB / FC BM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+                _StatusChip(status: match.estado),
               ],
             ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('\$440 / 2.2', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryText)),
+                Text(formattedDate, style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText)),
+              ],
+            )
           ],
         ),
       ),
@@ -190,7 +199,47 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ... (código del chip)
-    return Container();
+    final bool isActive = status.toUpperCase() == 'PROGRAMADO';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: isActive ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Text(
+        isActive ? 'ACTIVE' : 'CLOSED',
+        style: TextStyle(color: isActive ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 10),
+      ),
+    );
   }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold));
+  }
+}
+
+Widget _buildErrorView(String message, VoidCallback onRetry) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 60),
+          const SizedBox(height: 16),
+          const Text('¡Oops! Algo salió mal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          Text(message, style: const TextStyle(fontSize: 16, color: AppTheme.secondaryText), textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: onRetry, child: const Text('Reintentar')),
+        ],
+      ),
+    ),
+  );
 }

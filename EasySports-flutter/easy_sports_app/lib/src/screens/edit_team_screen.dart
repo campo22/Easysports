@@ -32,7 +32,7 @@ class _EditTeamScreenState extends State<EditTeamScreen> {
       setState(() => _isLoading = true);
 
       try {
-        await _apiService.put('equipos/${widget.team.id}', {
+        await _apiService.actualizarEquipo(widget.team.id, {
           'nombre': _nombreController.text,
           'deporte': _selectedDeporte,
         });
