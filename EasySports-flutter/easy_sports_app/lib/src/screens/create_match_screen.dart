@@ -132,7 +132,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Deporte'),
                 value: _selectedDeporte,
-                items: ['FUTBOL', 'BALONCESTO', 'VOLEY', 'TENIS', 'OTRO'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                items: ['FUTBOL', 'BASKET', 'VOLEY', 'AMERICANO'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                 onChanged: (v) => setState(() => _selectedDeporte = v),
                 validator: (v) => v == null ? 'Selecciona un deporte' : null,
               ),
