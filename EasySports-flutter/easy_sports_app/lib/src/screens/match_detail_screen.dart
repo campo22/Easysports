@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:easy_sports_app/src/models/match.dart';
 import 'package:easy_sports_app/src/screens/register_result_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
-import 'package:easy_sports_app/src/services/auth_service.dart';
+import 'package:easy_sports_app/src/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,7 @@ class MatchDetailScreen extends StatefulWidget {
 
 class _MatchDetailScreenState extends State<MatchDetailScreen> {
   final ApiService _apiService = ApiService();
-  final AuthService _authService = AuthService();
+  // final AuthService _authService = AuthService(); // Eliminado
   late Match _currentMatch;
   List<dynamic> _participants = [];
   bool _isLoading = true;
@@ -37,7 +38,15 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     setState(() => _isLoading = true);
 
     try {
-      _currentUserId = await _authService.getUserId();
+      final authProvider = context.read<AuthProvider>();
+      // El ID puede venir como int o string del token, aseguramos conversión si es necesario
+      final userIdDynamic = authProvider.userId; 
+      if (userIdDynamic is int) {
+        _currentUserId = userIdDynamic;
+      } else if (userIdDynamic is String) {
+        _currentUserId = int.tryParse(userIdDynamic);
+      }
+      
       _isCreator = _currentMatch.creadorId == _currentUserId;
 
       // Nota: Este endpoint no existe en el backend actual (v1.0)

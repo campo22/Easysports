@@ -14,8 +14,22 @@ import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'package:easy_sports_app/src/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final authProvider = AuthProvider();
+  await authProvider.loadToken();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => authProvider),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -27,9 +41,13 @@ class MyApp extends StatelessWidget {
       title: 'EasySports',
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
+        },
+      ),
       routes: {
-        '/': (context) => const LoginScreen(),
+        '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/register': (context) => const RegisterScreen(),
         '/create-match': (context) => const CreateMatchScreen(),
@@ -37,7 +55,6 @@ class MyApp extends StatelessWidget {
         '/join-match': (context) => const JoinMatchScreen(),
         '/invitations': (context) => const TeamInvitationsScreen(),
         '/league-standings': (context) => const LeagueStandingsScreen(),
-        // No es necesario registrar aquí porque la navegación es por MaterialPageRoute
       },
     );
   }

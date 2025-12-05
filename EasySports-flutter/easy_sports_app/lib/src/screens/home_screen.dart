@@ -4,7 +4,8 @@ import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/screens/user_profile_screen.dart';
 import 'package:easy_sports_app/src/screens/user_teams_screen.dart';
 import 'package:easy_sports_app/src/screens/ligas_screen.dart';
-import 'package:easy_sports_app/src/services/auth_service.dart'; // Importa el servicio
+import 'package:easy_sports_app/src/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -18,9 +19,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AuthService _authService = AuthService(); // Instancia el servicio
+  // final AuthService _authService = AuthService(); // Eliminado
   int _selectedIndex = 0;
-  String _userName = '...'; // Variable para guardar el nombre del usuario
+  String _userName = '...'; 
 
   final GlobalKey<MatchesDashboardScreenState> _matchesDashboardKey = GlobalKey();
   late final List<Widget> _screens;
@@ -37,13 +38,18 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
-  Future<void> _loadUserData() async {
-    final name = await _authService.getUserName();
-    if (mounted) {
-      setState(() {
-        _userName = name ?? 'Usuario';
-      });
-    }
+  void _loadUserData() {
+    // Usamos addPostFrameCallback para asegurar que el contexto esté listo
+    // o simplemente leemos directamente si estamos en un build method, pero aquí es init/load.
+    // Provider listen: false está bien aquí.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+       final authProvider = context.read<AuthProvider>();
+       if (mounted) {
+         setState(() {
+           _userName = authProvider.userName ?? 'Usuario';
+         });
+       }
+    });
   }
 
   void _onItemTapped(int index) {

@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:easy_sports_app/src/services/api_service.dart';
+import 'package:provider/provider.dart';
+import 'package:easy_sports_app/src/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _apiService = ApiService();
+  // final _apiService = ApiService(); // Eliminado
   bool _isLoading = false;
 
   @override
@@ -31,50 +32,24 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        final response = await _apiService.login({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        });
-
-        if (response.statusCode == 200) {
-          // Asegurarse de que la respuesta es JSON antes de decodificarla
-          final contentType = response.headers['content-type'];
-          if (contentType != null && contentType.contains('application/json')) {
-            final data = jsonDecode(response.body);
-            await _apiService.saveToken(data['token']);
-            Navigator.pushReplacementNamed(context, '/home');
-          } else {
-            // Si no es JSON, probablemente sea texto plano
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Error en la respuesta del servidor')),
+        await context.read<AuthProvider>().login(
+              _emailController.text,
+              _passwordController.text,
             );
-          }
-        } else {
-          // Manejar respuestas de error
-          final contentType = response.headers['content-type'];
-          String errorMessage = 'Error al iniciar sesión';
-
-          if (contentType != null && contentType.contains('application/json')) {
-            // Si es JSON, extraer el mensaje de error
-            final errorData = jsonDecode(response.body);
-            errorMessage = errorData['message'] ?? 'Error en las credenciales';
-          } else {
-            // Si es texto plano, usar el cuerpo de la respuesta
-            errorMessage = response.body.isNotEmpty
-              ? response.body
-              : 'Código de error: ${response.statusCode}';
-          }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
+        // La navegación se maneja en el main.dart con el Consumer, 
+        // pero si necesitamos cerrar el bottom sheet o navegar explícitamente:
+        if (mounted) {
+           Navigator.pop(context); // Cerrar el bottom sheet si está abierto
+           // No es necesario pushReplacementNamed si el main.dart redirige por estado
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error de red: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al iniciar sesión: ${e.toString()}')),
+          );
+        }
       } finally {
-        if(mounted){
+        if (mounted) {
           setState(() {
             _isLoading = false;
           });

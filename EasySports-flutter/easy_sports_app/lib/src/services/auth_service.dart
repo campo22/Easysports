@@ -1,36 +1,46 @@
-import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AuthService {
-  Future<Map<String, dynamic>?> _getDecodedToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
+  // TODO: Usar variable de entorno o configuración para la URL base
+  // Para emulador Android usar 10.0.2.2, para iOS localhost
+  static const String baseUrl = 'http://localhost:8080/api/auth';
 
-    if (token != null && !JwtDecoder.isExpired(token)) {
-      return JwtDecoder.decode(token);
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final url = Uri.parse('$baseUrl/login');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al iniciar sesión: ${response.body}');
     }
-    return null;
   }
 
-  Future<int?> getUserId() async {
-    final tokenData = await _getDecodedToken();
-    if (tokenData != null) {
-      // La clave 'sub' es el estándar para el ID de usuario en JWT.
-      final userId = tokenData['sub'] ?? tokenData['id'];
-      return userId is int ? userId : int.tryParse(userId.toString());
+  Future<Map<String, dynamic>> register(String nombre, String email, String password) async {
+    final url = Uri.parse('$baseUrl/registro');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'nombre': nombre,
+        'email': email,
+        'password': password,
+        // 'rol': 'USER' // Asumiendo que el backend asigna rol por defecto o se envía aquí
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al registrarse: ${response.body}');
     }
-    return null;
-  }
-
-  Future<String?> getUserName() async {
-    final tokenData = await _getDecodedToken();
-    // Asumo que el nombre viene en la clave 'nombreCompleto' o 'name'.
-    return tokenData?['nombreCompleto'] ?? tokenData?['name'] ?? 'Usuario';
-  }
-
-  Future<String?> getUserEmail() async {
-    final tokenData = await _getDecodedToken();
-    // La clave 'email' es bastante estándar.
-    return tokenData?['email'] ?? 'email@example.com';
   }
 }

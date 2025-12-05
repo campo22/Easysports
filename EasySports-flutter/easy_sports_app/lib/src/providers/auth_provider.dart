@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import '../services/auth_service.dart';
+
+class AuthProvider with ChangeNotifier {
+  final AuthService _authService = AuthService();
+  String? _token;
+  bool _isAuthenticated = false;
+  Map<String, dynamic>? _decodedToken;
+
+  bool get isAuthenticated => _isAuthenticated;
+  String? get token => _token;
+  
+  String? get userName => _decodedToken?['nombre'] ?? _decodedToken?['sub'];
+  String? get userEmail => _decodedToken?['email'] ?? _decodedToken?['sub'];
+  // Intentar obtener ID numérico o string
+  dynamic get userId => _decodedToken?['id'] ?? _decodedToken?['userId'];
+
+  Future<void> loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('jwt_token');
+
+    if (_token != null && !JwtDecoder.isExpired(_token!)) {
+      _isAuthenticated = true;
+      _decodedToken = JwtDecoder.decode(_token!);
+    } else {
+      _isAuthenticated = false;
+      _token = null;
+      _decodedToken = null;
+    }
+    notifyListeners();
+  }
+
+  Future<void> login(String email, String password) async {
+    try {
+      final response = await _authService.login(email, password);
+      final token = response['accessToken']; 
+      await _saveToken(token);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> register(String nombre, String email, String password) async {
+    try {
+      final response = await _authService.register(nombre, email, password);
+      final token = response['accessToken'];
+      await _saveToken(token);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> _saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jwt_token', token);
+    _token = token;
+    _isAuthenticated = true;
+    _decodedToken = JwtDecoder.decode(token);
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('jwt_token');
+    _token = null;
+    _isAuthenticated = false;
+    _decodedToken = null;
+    notifyListeners();
+  }
+}

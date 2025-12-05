@@ -1,6 +1,7 @@
 import 'package:easy_sports_app/src/models/invitation.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
-import 'package:easy_sports_app/src/services/auth_service.dart'; // Importa el servicio
+import 'package:easy_sports_app/src/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert'; // Necesario para jsonDecode
@@ -14,7 +15,7 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final ApiService _apiService = ApiService();
-  final AuthService _authService = AuthService(); // Instancia el servicio
+  // final AuthService _authService = AuthService(); // Eliminado
   List<Invitation> _invitations = [];
   bool _isLoading = true;
 
@@ -32,9 +33,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Cargar datos del usuario desde el token
-      final name = await _authService.getUserName();
-      final email = await _authService.getUserEmail();
+      // Cargar datos del usuario desde el AuthProvider
+      final authProvider = context.read<AuthProvider>();
+      final name = authProvider.userName;
+      final email = authProvider.userEmail;
+      
       if (mounted) {
         setState(() {
           _userName = name ?? 'Usuario';
@@ -43,6 +46,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       }
 
       // Cargar invitaciones pendientes
+      // TODO: Mover esto a un InvitationService o TeamService
       final invResponse = await _apiService.get('invitaciones/pendientes');
       if (invResponse.statusCode == 200) {
         final List<dynamic> jsonInv = invResponse.body.isEmpty ? [] : jsonDecode(invResponse.body);
@@ -54,6 +58,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       }
     } catch (e) {
       // Manejar error
+      debugPrint('Error cargando perfil: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
