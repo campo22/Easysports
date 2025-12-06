@@ -7,6 +7,7 @@ import 'package:easy_sports_app/src/screens/edit_profile_screen.dart';
 import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/screens/user_teams_screen.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
+import 'package:easy_sports_app/src/widgets/auth_wrapper_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
@@ -38,11 +39,7 @@ class MyApp extends StatelessWidget {
       title: 'EasySports',
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
-        },
-      ),
+      home: const AuthWrapperScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
