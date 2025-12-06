@@ -103,15 +103,17 @@ public class TeamController {
 
     /**
      * Busca un equipo por su ID único y devuelve sus detalles.
+     * Incluye el estado de membresía del usuario autenticado en relación con este equipo.
      * Solo usuarios autenticados pueden acceder.
      *
      * @param id El ID único del equipo.
+     * @param authentication Contexto de autenticación del usuario actual.
      * @return ResponseEntity con los detalles del equipo y estado HTTP 200.
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TeamResponse> findTeamById(@PathVariable Long id) {
-        TeamResponse response = teamService.findById(id);
+    public ResponseEntity<TeamResponse> findTeamById(@PathVariable Long id, Authentication authentication) {
+        TeamResponse response = teamService.findByIdWithUserStatus(id, authentication);
         return ResponseEntity.ok(response);
     }
 

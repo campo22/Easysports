@@ -56,6 +56,15 @@ public interface TeamService {
     TeamResponse findById(Long id);
 
     /**
+     * Busca un equipo por su ID único y devuelve sus detalles incluyendo el estado de membresía del usuario autenticado.
+     *
+     * @param id El ID único del equipo.
+     * @param authentication Contexto de autenticación del usuario actual.
+     * @return DTO con la información del equipo y el estado de membresía del usuario.
+     */
+    TeamResponse findByIdWithUserStatus(Long id, Authentication authentication);
+
+    /**
      * Obtiene una lista de todos los equipos en los que el usuario autenticado es miembro.
      *
      * @param authentication Contexto de autenticación del usuario.

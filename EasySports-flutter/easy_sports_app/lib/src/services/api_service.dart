@@ -54,6 +54,7 @@ class ApiService {
 
   // Encuentros/Partidos
   Future<http.Response> getPartidos([Map<String, String>? queryParams]) => getWithParams('v1/matches', queryParams);
+  Future<http.Response> getEquipoPorIdConEstado(int id) => get('v1/teams/$id');
   Future<http.Response> getEncuentroPorCodigo(String codigo) => get('v1/matches/$codigo');
   Future<http.Response> crearEncuentro(Map<String, dynamic> data) => post('v1/matches', data);
   Future<http.Response> unirseAEncuentro(String codigo) => post('v1/matches/$codigo/unirse', {});

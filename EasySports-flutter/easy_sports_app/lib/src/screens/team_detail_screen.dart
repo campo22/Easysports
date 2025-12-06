@@ -51,8 +51,8 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
         }
       }
 
-      // Cargar detalles actualizados del equipo
-      final response = await _apiService.getEquipoPorId(_currentTeam.id);
+      // Cargar detalles actualizados del equipo con estado de membresía del usuario
+      final response = await _apiService.getEquipoPorIdConEstado(_currentTeam.id);
       if (response.statusCode == 200) {
         final teamData = jsonDecode(response.body);
         debugPrint('🔍 Team Detail Debug:');

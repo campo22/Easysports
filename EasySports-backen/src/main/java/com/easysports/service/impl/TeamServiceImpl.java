@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -133,6 +134,61 @@ public class TeamServiceImpl implements TeamService {
         return teamRepository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado con ID: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TeamResponse findByIdWithUserStatus(Long id, Authentication authentication) {
+        Team team = teamRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado con ID: " + id));
+
+        // Obtener el usuario autenticado
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Long usuarioId = userDetails.getUser().getId();
+
+        // Determinar el estado de membresía del usuario en este equipo
+        EstadoMiembro estadoMiembro = EstadoMiembro.ACEPTADO; // Valor por defecto para el capitán
+        Optional<MiembroEquipo> relacion = miembroEquipoRepository.findByEquipoIdAndUsuarioId(id, usuarioId);
+
+        // Buscar la relación del usuario con el equipo
+        if (relacion.isPresent()) {
+            estadoMiembro = relacion.get().getEstado();
+        } else if (team.getCapitan().getId().equals(usuarioId)) {
+            // El usuario es el capitán, por lo tanto miembro aceptado
+            estadoMiembro = EstadoMiembro.ACEPTADO;
+        } else {
+            // Usuario no es miembro ni tiene relación con el equipo
+            // Podríamos usar un valor que indique que no es miembro, pero como no existe en el enum,
+            // simplemente dejamos el valor por defecto o null
+            estadoMiembro = null; // No es miembro del equipo
+        }
+
+        // Convertir equipo a respuesta incluyendo el estado de membresía del usuario
+        return toResponseWithUserStatus(team, estadoMiembro);
+    }
+
+    private TeamResponse toResponseWithUserStatus(Team team, EstadoMiembro estadoMiembro) {
+        List<com.easysports.dto.team.MiembroResponse> miembrosResponse = team.getMiembrosEquipo() != null
+                ? team.getMiembrosEquipo().stream()
+                .filter(m -> m.getEstado() == EstadoMiembro.ACEPTADO)
+                .map(m -> com.easysports.dto.team.MiembroResponse.builder()
+                        .id(m.getUsuario().getId())
+                        .nombreCompleto(m.getUsuario().getNombreCompleto())
+                        .email(m.getUsuario().getEmail())
+                        .esCapitan(Objects.equals(m.getUsuario().getId(), team.getCapitan().getId()))
+                        .build())
+                .collect(Collectors.toList())
+                : java.util.Collections.emptyList();
+
+        return TeamResponse.builder()
+                .id(team.getId())
+                .nombre(team.getNombre())
+                .tipoDeporte(team.getTipoDeporte())
+                .capitanId(team.getCapitan() != null ? team.getCapitan().getId() : null)
+                .partidosGanados(team.getPartidosGanados())
+                .miembros(miembrosResponse)
+                .estadoMiembro(estadoMiembro) // Incluir el estado de membresía del usuario actual
+                .build();
     }
 
     @Override
