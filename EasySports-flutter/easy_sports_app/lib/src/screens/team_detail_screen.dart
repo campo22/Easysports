@@ -317,6 +317,38 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          // Nuevo botón para invitar jugadores con la interfaz moderna
+          if (_isCaptain)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InvitePlayerScreen(team: _currentTeam),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTheme.primaryOrange),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'Buscar y Invitar Jugadores',
+                    style: TextStyle(
+                      color: AppTheme.primaryOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         if (_currentTeam.miembros.isEmpty)
           const Center(
             child: Padding(
