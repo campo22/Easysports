@@ -13,12 +13,24 @@ class InvitePlayerScreen extends StatefulWidget {
   State<InvitePlayerScreen> createState() => _InvitePlayerScreenState();
 }
 
+/// Gestiona el estado y la lógica de la pantalla de invitación de jugadores.
+///
+/// Esta pantalla permite a un capitán de equipo buscar jugadores en la plataforma
+/// y enviarles invitaciones para unirse a su equipo. Soporta la selección
+/// múltiple para invitar a varios jugadores a la vez.
 class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _allPlayers = [];
   List<Map<String, dynamic>> _filteredPlayers = [];
   bool _isLoading = true;
+  bool _isInviting = false;
+
+  /// Almacena los IDs de los jugadores seleccionados para la invitación múltiple.
+  ///
+  /// Se utiliza un [Set] para garantizar que no haya IDs duplicados y para
+  /// tener una alta eficiencia al añadir, eliminar y comprobar la existencia de un jugador.
+  final Set<int> _selectedPlayerIds = {};
 
   @override
   void initState() {
@@ -41,35 +53,35 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
           'id': 1,
           'nombreCompleto': 'Alex Morgan',
           'posicion': 'Delantero',
-          'avatarUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd723b12d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80',
+          'avatarUrl': 'https://placehold.co/200x200/E67E22/FFFFFF/png',
           'estado': 'disponible' // puede ser 'disponible', 'invitado', 'ocupado'
         },
         {
           'id': 2,
           'nombreCompleto': 'Megan Rapinoe',
           'posicion': 'Centrocampista',
-          'avatarUrl': 'https://images.unsplash.com/photo-1494790108377-be550ed6d120?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80',
+          'avatarUrl': 'https://placehold.co/200x200/FFB84D/FFFFFF/png',
           'estado': 'invitado'
         },
         {
           'id': 3,
           'nombreCompleto': 'Cristiano Ronaldo',
           'posicion': 'Delantero',
-          'avatarUrl': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80',
+          'avatarUrl': 'https://placehold.co/200x200/4CAF50/FFFFFF/png',
           'estado': 'disponible'
         },
         {
           'id': 4,
           'nombreCompleto': 'Sam Kerr',
           'posicion': 'Delantera',
-          'avatarUrl': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80',
+          'avatarUrl': 'https://placehold.co/200x200/FF5252/FFFFFF/png',
           'estado': 'disponible'
         },
         {
           'id': 5,
           'nombreCompleto': 'Kevin De Bruyne',
           'posicion': 'Centrocampista',
-          'avatarUrl': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80',
+          'avatarUrl': 'https://placehold.co/200x200/00E676/FFFFFF/png',
           'estado': 'disponible'
         },
       ];
@@ -109,7 +121,73 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
     });
   }
 
-  Future<void> _invitePlayer(int playerId, String playerName) async {
+  /// Alterna la selección de un jugador para la invitación múltiple.
+  ///
+  /// Si el [playerId] ya está en el conjunto de seleccionados, lo elimina.
+  /// Si no, lo añade. Se llama a [setState] para reconstruir la UI y reflejar
+  /// el cambio visual en la selección.
+  void _togglePlayerSelection(int playerId) {
+    setState(() {
+      if (_selectedPlayerIds.contains(playerId)) {
+        _selectedPlayerIds.remove(playerId);
+      } else {
+        _selectedPlayerIds.add(playerId);
+      }
+    });
+  }
+
+  /// Envía invitaciones a todos los jugadores seleccionados.
+  ///
+  /// Itera sobre los IDs en [_selectedPlayerIds] y crea una lista de futuros
+  /// llamando a [_invitePlayer] para cada uno. Utiliza [Future.wait] para
+  /// ejecutar todas las invitaciones en paralelo, mejorando el rendimiento.
+  ///
+  /// Al finalizar, muestra una [SnackBar] con un resumen de los resultados
+  /// y limpia la selección.
+  Future<void> _inviteSelectedPlayers() async {
+    if (_selectedPlayerIds.isEmpty || _isInviting) return;
+
+    setState(() {
+      _isInviting = true;
+    });
+
+    final List<Future<bool>> inviteFutures = [];
+    for (final playerId in _selectedPlayerIds) {
+      final player = _allPlayers.firstWhere((p) => p['id'] == playerId);
+      inviteFutures.add(_invitePlayer(playerId, player['nombreCompleto']));
+    }
+
+    final results = await Future.wait(inviteFutures);
+    final successfulInvites = results.where((success) => success).length;
+    final failedInvites = results.length - successfulInvites;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Invitaciones enviadas: $successfulInvites con éxito, $failedInvites fallidas.',
+          ),
+          backgroundColor:
+              failedInvites > 0 ? AppTheme.errorRed : AppTheme.successGreen,
+        ),
+      );
+
+      // Limpiar selección y actualizar estado
+      setState(() {
+        _selectedPlayerIds.clear();
+        _isInviting = false;
+      });
+    }
+  }
+
+  /// Envía una invitación a un solo jugador y actualiza su estado local.
+  ///
+  /// Llama al servicio de API para invitar a un jugador por su [playerId].
+  /// Si la invitación es exitosa (código 200), actualiza el estado del jugador
+  /// a 'invitado' en la lista local de jugadores y refresca la lista filtrada.
+  ///
+  /// Devuelve `true` si la invitación fue exitosa, `false` en caso contrario.
+  Future<bool> _invitePlayer(int playerId, String playerName) async {
     try {
       final response = await _apiService.invitarMiembro(widget.team.id, {
         'email': '' // En una implementación real, usaríamos el email del jugador
@@ -117,46 +195,22 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
 
       if (response.statusCode == 200) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Invitación enviada exitosamente!'),
-              backgroundColor: AppTheme.successGreen,
-            ),
-          );
-          
           // Actualizar estado del jugador
           setState(() {
-            final playerIndex = _filteredPlayers.indexWhere((p) => p['id'] == playerId);
+            final playerIndex =
+                _allPlayers.indexWhere((p) => p['id'] == playerId);
             if (playerIndex != -1) {
-              _filteredPlayers[playerIndex]['estado'] = 'invitado';
+              _allPlayers[playerIndex]['estado'] = 'invitado';
             }
+            _filterPlayers(_searchController.text);
           });
         }
+        return true;
       } else {
-        final contentType = response.headers['content-type'];
-        String errorMessage = 'Error al enviar invitación';
-
-        if (contentType != null && contentType.contains('application/json')) {
-          final errorData = jsonDecode(response.body);
-          errorMessage = errorData['message'] ?? 'Error en el proceso de invitación';
-        } else {
-          errorMessage = response.body.isNotEmpty 
-            ? response.body 
-            : 'Código de error: ${response.statusCode}';
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
-        }
+        return false;
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error de red: $e')),
-        );
-      }
+      return false;
     }
   }
 
@@ -227,93 +281,114 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
           ),
         ],
       ),
+      // Muestra un botón de acción flotante solo si hay jugadores seleccionados.
+      // Este botón permite al usuario confirmar y enviar las invitaciones.
+      floatingActionButton: _selectedPlayerIds.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: _inviteSelectedPlayers,
+              label: _isInviting
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text('Invitar (${_selectedPlayerIds.length})'),
+              icon: const Icon(Icons.send),
+              backgroundColor: AppTheme.primaryOrange,
+            )
+          : null,
     );
   }
 
+  /// Construye el widget de tarjeta para un jugador individual.
+  ///
+  /// La tarjeta muestra el avatar, nombre y posición del jugador. Es interactiva
+  /// y permite la selección a través de un [GestureDetector]. El estado de
+  /// selección se indica con un borde de color y un [Checkbox].
+  ///
+  /// Si un jugador ya ha sido invitado, se muestra un texto 'Invitado' y
+  /// la tarjeta se deshabilita.
   Widget _buildPlayerCard(Map<String, dynamic> player) {
     final String estado = player['estado'];
     final bool isInvited = estado == 'invitado';
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackground, // Color de card como en el diseño
-        borderRadius: BorderRadius.circular(16), // Bordes redondeados
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                image: DecorationImage(
-                  image: NetworkImage(player['avatarUrl']),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    player['nombreCompleto'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryText,
-                    ),
-                  ),
-                  Text(
-                    player['posicion'],
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.secondaryText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            if (!isInvited)
-              ElevatedButton(
-                onPressed: () => _invitePlayer(player['id'], player['nombreCompleto']),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryOrange,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20), // Botón redondeado
-                  ),
-                ),
-                child: const Text(
-                  'Invitar',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
-            else
+    final bool isSelected = _selectedPlayerIds.contains(player['id']);
+
+    return GestureDetector(
+      onTap: isInvited ? null : () => _togglePlayerSelection(player['id']),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.cardBackgroundLight
+              : AppTheme.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: isSelected
+              ? Border.all(color: AppTheme.primaryOrange, width: 2)
+              : null,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  color: AppTheme.cardBackground, // Color gris similar al diseño
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Invitado',
-                  style: TextStyle(
-                    color: AppTheme.secondaryText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: NetworkImage(player['avatarUrl']),
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      player['nombreCompleto'],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryText,
+                      ),
+                    ),
+                    Text(
+                      player['posicion'],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (isInvited)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardBackground, // Color gris similar al diseño
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Invitado',
+                    style: TextStyle(
+                      color: AppTheme.secondaryText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (bool? value) {
+                    _togglePlayerSelection(player['id']);
+                  },
+                  activeColor: AppTheme.primaryOrange,
+                  checkColor: Colors.white,
+                  side: const BorderSide(color: AppTheme.secondaryText, width: 2),
+                ),
+            ],
+          ),
         ),
       ),
     );

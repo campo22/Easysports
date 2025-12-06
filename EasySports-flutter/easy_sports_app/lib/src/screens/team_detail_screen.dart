@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/team.dart';
-import 'package:easy_sports_app/src/screens/invite_members_screen.dart';
 import 'package:easy_sports_app/src/screens/invite_player_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
@@ -172,13 +171,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => InviteMembersScreen(
-                      team: _currentTeam,
-                      onInviteSuccess: () {
-                        // Callback para actualizar detalles del equipo después de una invitación exitosa
-                        _loadUserDataAndTeamDetails();
-                      },
-                    ),
+                    builder: (context) => InvitePlayerScreen(team: _currentTeam),
                   ),
                 );
               },
@@ -279,13 +272,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => InviteMembersScreen(
-                        team: _currentTeam,
-                        onInviteSuccess: () {
-                          // Callback para actualizar detalles del equipo después de una invitación exitosa
-                          _loadUserDataAndTeamDetails();
-                        },
-                      ),
+                      builder: (context) => InvitePlayerScreen(team: _currentTeam),
                     ),
                   );
                 },
@@ -307,13 +294,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => InviteMembersScreen(
-                        team: _currentTeam,
-                        onInviteSuccess: () {
-                          // Callback para actualizar detalles del equipo después de una invitación exitosa
-                          _loadUserDataAndTeamDetails();
-                        },
-                      ),
+                      builder: (context) => InvitePlayerScreen(team: _currentTeam),
                     ),
                   );
                 },
