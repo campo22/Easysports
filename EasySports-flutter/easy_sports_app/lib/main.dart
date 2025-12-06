@@ -11,6 +11,7 @@ import 'package:easy_sports_app/src/widgets/auth_wrapper_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
+import 'package:easy_sports_app/src/services/navigation_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
       title: 'EasySports',
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
+      navigatorKey: NavigationService.instance.navigatorKey,
       home: const AuthWrapperScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),

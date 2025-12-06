@@ -15,22 +15,43 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nombreCompletoController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late TextEditingController _nombreCompletoController;
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
   String? _selectedSexo;
-  final _edadAniosController = TextEditingController();
-  final _edadMesesController = TextEditingController();
+  late TextEditingController _edadAniosController;
+  late TextEditingController _edadMesesController;
 
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _nombreCompletoController = TextEditingController();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    _edadAniosController = TextEditingController();
+    _edadMesesController = TextEditingController();
+  }
+
+  @override
   void dispose() {
-    _nombreCompletoController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _edadAniosController.dispose();
-    _edadMesesController.dispose();
+    // Verificar que los controladores estén montados antes de desecharlos
+    if (_nombreCompletoController.mounted) {
+      _nombreCompletoController.dispose();
+    }
+    if (_emailController.mounted) {
+      _emailController.dispose();
+    }
+    if (_passwordController.mounted) {
+      _passwordController.dispose();
+    }
+    if (_edadAniosController.mounted) {
+      _edadAniosController.dispose();
+    }
+    if (_edadMesesController.mounted) {
+      _edadMesesController.dispose();
+    }
     super.dispose();
   }
 

@@ -15,14 +15,26 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
+
+  @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    // Verificar que los controladores estén montados antes de desecharlos
+    if (_emailController.mounted) {
+      _emailController.dispose();
+    }
+    if (_passwordController.mounted) {
+      _passwordController.dispose();
+    }
     super.dispose();
   }
 
@@ -33,12 +45,25 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        await context.read<AuthProvider>().login(
-              _emailController.text.trim(),
-              _passwordController.text,
-            );
+        // Verificar que los controladores estén disponibles antes de acceder a sus valores
+        String email = '';
+        String password = '';
+
+        if (_emailController.hasClients) {
+          email = _emailController.text.trim();
+        }
+        if (_passwordController.hasClients) {
+          password = _passwordController.text;
+        }
+
+        await context.read<AuthProvider>().login(email, password);
+
         if (mounted) {
-          // Usar Navigator.pushReplacement para evitar múltiples instancias de la pantalla
+          // Limpiar los controladores antes de navegar para evitar problemas de estado
+          if (_emailController.hasClients) _emailController.clear();
+          if (_passwordController.hasClients) _passwordController.clear();
+
+          // Usar el servicio de navegación para evitar problemas de estado
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
