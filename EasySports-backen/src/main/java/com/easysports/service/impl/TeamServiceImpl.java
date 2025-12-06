@@ -204,12 +204,25 @@ public class TeamServiceImpl implements TeamService {
     }
 
     private TeamResponse toResponse(Team team) {
+        List<com.easysports.dto.team.MiembroResponse> miembrosResponse = team.getMiembrosEquipo() != null
+                ? team.getMiembrosEquipo().stream()
+                .filter(m -> m.getEstado() == EstadoMiembro.ACEPTADO)
+                .map(m -> com.easysports.dto.team.MiembroResponse.builder()
+                        .id(m.getUsuario().getId())
+                        .nombreCompleto(m.getUsuario().getNombreCompleto())
+                        .email(m.getUsuario().getEmail())
+                        .esCapitan(Objects.equals(m.getUsuario().getId(), team.getCapitan().getId()))
+                        .build())
+                .collect(Collectors.toList())
+                : java.util.Collections.emptyList();
+
         return TeamResponse.builder()
                 .id(team.getId())
                 .nombre(team.getNombre())
                 .tipoDeporte(team.getTipoDeporte())
                 .capitanId(team.getCapitan() != null ? team.getCapitan().getId() : null)
                 .partidosGanados(team.getPartidosGanados())
+                .miembros(miembrosResponse)
                 .build();
     }
 }

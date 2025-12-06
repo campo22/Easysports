@@ -23,5 +23,8 @@ public class TeamResponse {
     private Integer partidosGanados;
 
     // Opcional: Incluir el estado de la membresía del usuario autenticado en este equipo
+    // Opcional: Incluir el estado de la membresía del usuario autenticado en este equipo
     private EstadoMiembro estadoMiembro;
+
+    private java.util.List<MiembroResponse> miembros;
 }

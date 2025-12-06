@@ -236,7 +236,7 @@ class UserProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SportCard(
-          onTap: () => Navigator.pushNamed(context, '/team-invitations'),
+          onTap: () => Navigator.pushNamed(context, '/invitations'),
           child: const Row(
             children: [
               Icon(Icons.mail_outline, color: AppTheme.primaryOrange, size: 28),
@@ -274,7 +274,7 @@ class UserProfileScreen extends StatelessWidget {
         const SizedBox(height: 16),
         SportCard(
           onTap: () {
-            // TODO: Implementar edición de perfil
+            Navigator.pushNamed(context, '/edit-profile');
           },
           child: const Row(
             children: [

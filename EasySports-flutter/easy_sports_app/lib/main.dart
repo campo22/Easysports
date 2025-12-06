@@ -3,6 +3,7 @@ import 'package:easy_sports_app/src/screens/create_team_screen.dart';
 import 'package:easy_sports_app/src/screens/home_screen.dart';
 import 'package:easy_sports_app/src/screens/login_screen.dart';
 import 'package:easy_sports_app/src/screens/register_screen.dart';
+import 'package:easy_sports_app/src/screens/edit_profile_screen.dart';
 import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/screens/user_teams_screen.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/create-team': (context) => const CreateTeamScreen(),
         '/user-teams': (context) => const UserTeamsScreen(),
         '/invitations': (context) => const TeamInvitationsScreen(),
+        '/edit-profile': (context) => const EditProfileScreen(),
       },
     );
   }

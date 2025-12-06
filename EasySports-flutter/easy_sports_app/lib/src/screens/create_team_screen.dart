@@ -15,7 +15,8 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
   final _apiService = ApiService();
 
   final _nombreController = TextEditingController();
-  final _descripcionController = TextEditingController();
+  // final _descripcionController = TextEditingController(); // Backend no soporta descripción
+  String? _selectedDeporte;
   bool _isLoading = false;
 
   Future<void> _createTeam() async {
@@ -25,7 +26,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
       try {
         final response = await _apiService.crearEquipo({
           'nombre': _nombreController.text.trim(),
-          'descripcion': _descripcionController.text.trim(),
+          'tipoDeporte': _selectedDeporte,
         });
 
         if (response.statusCode == 201 || response.statusCode == 200) {
@@ -68,7 +69,6 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
   @override
   void dispose() {
     _nombreController.dispose();
-    _descripcionController.dispose();
     super.dispose();
   }
 
@@ -77,7 +77,11 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
-        title: const Text('Crear Nuevo Equipo'),
+        title: const Text('Crear Equipo'),
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: AppTheme.primaryText),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
@@ -110,6 +114,21 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
                 validator: (v) => (v == null || v.isEmpty) ? 'Introduce un nombre' : null,
               ),
               const SizedBox(height: 16.0),
+              // Selector de Deporte
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Deporte',
+                  prefixIcon: Icon(Icons.sports_soccer, color: AppTheme.secondaryText),
+                ),
+                value: _selectedDeporte,
+                items: ['FUTBOL', 'BASKET', 'VOLEY', 'AMERICANO']
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedDeporte = v),
+                validator: (v) => v == null ? 'Selecciona un deporte' : null,
+              ),
+              const SizedBox(height: 16.0),
+              /* Backend no soporta descripción
               TextFormField(
                 controller: _descripcionController,
                 decoration: const InputDecoration(
@@ -117,7 +136,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
                   prefixIcon: Icon(Icons.description, color: AppTheme.secondaryText),
                 ),
                 maxLines: 3,
-              ),
+              ),*/
               const SizedBox(height: 32.0),
               PrimaryButton(
                 text: 'Crear Equipo',

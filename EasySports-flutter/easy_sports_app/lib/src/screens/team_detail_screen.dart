@@ -232,7 +232,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Capitán: ${_currentTeam.capitanNombre ?? "Desconocido"}',
+                      'ID: ${_currentTeam.id}',
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppTheme.secondaryText,
@@ -243,18 +243,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
               ),
             ],
           ),
-          if (_currentTeam.descripcion != null && _currentTeam.descripcion!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Divider(color: AppTheme.cardBackgroundLight),
-            const SizedBox(height: 16),
-            Text(
-              _currentTeam.descripcion!,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.secondaryText,
-              ),
-            ),
-          ],
+          const SizedBox(height: 16), // Separator instead of description
         ],
       ),
     );
@@ -284,12 +273,24 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
           ],
         ),
         const SizedBox(height: 12),
+        if (_isCaptain)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                text: 'Invitar Nuevo Miembro',
+                icon: Icons.person_add,
+                onPressed: _inviteMember,
+              ),
+            ),
+          ),
         if (_currentTeam.miembros.isEmpty)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
               child: Text(
-                'No hay miembros aún',
+                'Lista de miembros no disponible o vacía.',
                 style: TextStyle(color: AppTheme.secondaryText),
               ),
             ),

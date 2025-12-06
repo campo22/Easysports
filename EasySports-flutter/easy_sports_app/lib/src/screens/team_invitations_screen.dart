@@ -47,7 +47,6 @@ class _TeamInvitationsScreenState extends State<TeamInvitationsScreen> {
             // Filtrar solo equipos donde el usuario tiene invitación pendiente
             _pendingInvitations = teamsList
                 .map((teamJson) => Team.fromJson(teamJson))
-                .where((team) => team.miembros.any((m) => m.id == null)) // Simplificado
                 .toList();
           });
         }
@@ -153,13 +152,13 @@ class _TeamInvitationsScreenState extends State<TeamInvitationsScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 4),
-                                        Text(
-                                          'Capitán: ${team.capitanNombre ?? "Desconocido"}',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: AppTheme.secondaryText,
-                                          ),
-                                        ),
+                                                      Text(
+                            'Capitán ID: ${team.capitanId}',
+                            style: const TextStyle(
+                              color: AppTheme.secondaryText,
+                              fontSize: 14,
+                            ),
+                          ),
                                       ],
                                     ),
                                   ),

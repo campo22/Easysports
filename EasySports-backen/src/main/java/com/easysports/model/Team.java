@@ -36,6 +36,7 @@ public class Team {
     @JoinColumn(name = "capitan_id", nullable = false)
     private User capitan;
 
+    @Builder.Default
     @Column(name = "partidos_ganados", nullable = false)
     private Integer partidosGanados = 0;
 

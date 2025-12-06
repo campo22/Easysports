@@ -12,10 +12,19 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   String? get token => _token;
   
-  String? get userName => _decodedToken?['nombre'] ?? _decodedToken?['sub'];
-  String? get userEmail => _decodedToken?['email'] ?? _decodedToken?['sub'];
+  String? _localName;
+  String? _localEmail;
+
+  String? get userName => _localName ?? _decodedToken?['nombre'] ?? _decodedToken?['sub'];
+  String? get userEmail => _localEmail ?? _decodedToken?['email'] ?? _decodedToken?['sub'];
   // Intentar obtener ID numérico o string
   dynamic get userId => _decodedToken?['id'] ?? _decodedToken?['userId'];
+
+  void updateLocalUser({String? name, String? email}) {
+    if (name != null) _localName = name;
+    if (email != null) _localEmail = email;
+    notifyListeners();
+  }
 
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -83,6 +92,8 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _isAuthenticated = false;
     _decodedToken = null;
+    _localName = null;
+    _localEmail = null;
     notifyListeners();
   }
 }
