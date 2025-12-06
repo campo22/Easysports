@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
 
+import 'all_matches_screen.dart';
+
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
 
@@ -551,7 +553,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   SliverToBoxAdapter _buildMatchesSection() {
-    final matches = _filteredMatches;
+    final matchesToShow = _filteredMatches.take(3).toList();
     
     return SliverToBoxAdapter(
       child: Padding(
@@ -559,16 +561,37 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Próximos Partidos',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryText,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Próximos Partidos',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryText,
+                  ),
+                ),
+                if (_matches.length > 3)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AllMatchesScreen()),
+                      );
+                    },
+                    child: const Text(
+                      'Ver Todos',
+                      style: TextStyle(
+                        color: AppTheme.primaryOrange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 16),
-            if (matches.isEmpty)
+            if (matchesToShow.isEmpty)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
@@ -582,9 +605,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: matches.length,
+                itemCount: matchesToShow.length,
                 itemBuilder: (context, index) {
-                  return _buildMatchCard(matches[index]);
+                  return _buildMatchCard(matchesToShow[index]);
                 },
               ),
           ],
