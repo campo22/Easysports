@@ -113,4 +113,26 @@ public class AuthServiceImpl implements AuthService {
         // Guardar los cambios
         userRepository.save(user);
     }
+
+    @Override
+    public PerfilUsuarioResponse getPerfilActual(Authentication authentication) {
+        // Obtener el usuario autenticado
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        User user = userRepository.findById(userDetails.getUser().getId())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado."));
+
+        // Convertir a DTO de respuesta de perfil
+        return PerfilUsuarioResponse.builder()
+            .id(user.getId())
+            .nombreCompleto(user.getNombreCompleto())
+            .email(user.getEmail())
+            .sexo(user.getSexo().name())
+            .edadAnios(user.getEdadAnios())
+            .edadMeses(user.getEdadMeses())
+            .esLeagueManager(user.getEsLeagueManager())
+            .posicionPreferida(user.getPosicionPreferida())
+            .avatarUrl(user.getAvatarUrl())
+            .puntuacion(user.getPuntuacion() != null ? user.getPuntuacion().doubleValue() : 0.0)
+            .build();
+    }
 }

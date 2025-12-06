@@ -3,11 +3,12 @@ package com.easysports.service;
 import com.easysports.dto.auth.LoginRequest;
 import com.easysports.dto.auth.RegisterRequest;
 import com.easysports.dto.user.UpdateUserRequest; // Importar el nuevo DTO
+import com.easysports.dto.user.PerfilUsuarioResponse; // Importar el DTO de respuesta
 import org.springframework.security.core.Authentication; // Importar Authentication
 
 /**
  * Interfaz para el servicio de autenticación.
- * Define los métodos para el registro y login de usuarios.
+ * Define los métodos para el registro, login y gestión del perfil de usuarios.
  */
 public interface AuthService {
 
@@ -34,4 +35,12 @@ public interface AuthService {
      * @param authentication Contexto de autenticación del usuario.
      */
     void updateProfile(UpdateUserRequest request, Authentication authentication); // Nuevo método
+
+    /**
+     * Obtiene el perfil completo del usuario autenticado.
+     *
+     * @param authentication Contexto de autenticación del usuario.
+     * @return Perfil de usuario con información completa.
+     */
+    PerfilUsuarioResponse getPerfilActual(Authentication authentication);
 }
