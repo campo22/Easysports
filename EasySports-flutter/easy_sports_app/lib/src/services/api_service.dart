@@ -62,6 +62,9 @@ class ApiService {
   // Ligas
   Future<http.Response> getClasificacionLiga(int ligaId) => get('v1/ligas/$ligaId/clasificacion');
 
+  // Perfil de usuario
+  Future<http.Response> getPerfilUsuario() => get('v1/perfil');
+
   // Métodos genéricos para mantener compatibilidad
   Future<http.Response> get(String endpoint) async {
     final headers = await _getHeaders();

@@ -17,8 +17,34 @@ class AuthProvider with ChangeNotifier {
 
   String? get userName => _localName ?? _decodedToken?['nombre'] ?? _decodedToken?['sub'];
   String? get userEmail => _localEmail ?? _decodedToken?['email'] ?? _decodedToken?['sub'];
-  // Intentar obtener ID numérico o string
-  dynamic get userId => _decodedToken?['id'] ?? _decodedToken?['userId'];
+  // Intentar obtener ID numérico o string - ahora buscamos también en campos comunes
+  dynamic get userId {
+    // Buscar en los campos más comunes del JWT
+    final rawUserId = _decodedToken?['id'] ??
+                      _decodedToken?['userId'] ??
+                      _decodedToken?['sub']; // 'sub' es el subject del JWT, usualmente el ID o email
+
+    // Intentar convertir a int si es posible
+    if (rawUserId is String) {
+      if (rawUserId.contains('@')) {
+        // Este es un email, no un ID numérico
+        // El backend debería incluir el ID numérico en el token JWT
+        // Por ahora, en situaciones de desarrollo, podríamos asumir que el ID está en otro campo
+        // o usar un servicio para obtener el ID por email si no está en el token
+        debugPrint('⚠️ ADVERTENCIA: El token JWT tiene email en lugar de ID numérico. El backend debería incluir el ID numérico.');
+      } else {
+        // Podría ser un ID en formato string, intentamos convertirlo
+        try {
+          return int.parse(rawUserId);
+        } catch (e) {
+          // Si no se puede parsear a entero, lo dejamos como string
+          return rawUserId;
+        }
+      }
+    }
+
+    return rawUserId;
+  }
 
   void updateLocalUser({String? name, String? email}) {
     if (name != null) _localName = name;

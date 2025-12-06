@@ -28,17 +28,26 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
   void initState() {
     super.initState();
     _currentTeam = widget.team;
-    _loadTeamDetails();
   }
 
-  Future<void> _loadTeamDetails() async {
+  Future<void> _loadUserDataAndTeamDetails() async {
     setState(() => _isLoading = true);
-    
+
     try {
-      // Obtener ID del usuario actual
+      // Primero obtenemos el ID del usuario actual desde el AuthProvider
       final authProvider = context.read<AuthProvider>();
       _currentUserId = authProvider.userId;
-      
+
+      // Si el userId es un email (string con @), obtenemos el ID numérico real desde el backend
+      if (_currentUserId is String && (_currentUserId as String).contains('@')) {
+        // Obtener el perfil del usuario para obtener el ID real
+        final perfilResponse = await _apiService.getPerfilUsuario();
+        if (perfilResponse.statusCode == 200) {
+          final perfilData = jsonDecode(perfilResponse.body);
+          _currentUserId = perfilData['id'] as int?;
+        }
+      }
+
       // Cargar detalles actualizados del equipo
       final response = await _apiService.getEquipoPorId(_currentTeam.id);
       if (response.statusCode == 200) {
@@ -47,12 +56,33 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
         debugPrint('   Current User ID: $_currentUserId');
         debugPrint('   Team Data: $teamData');
         debugPrint('   Team Captain ID: ${teamData['capitanId']}');
-        debugPrint('   Is Captain?: ${teamData['capitanId'] == _currentUserId}');
+
+        bool isCaptain = false;
+
+        // Manejar comparación entre diferentes tipos de IDs
+        if (_currentUserId is int && teamData['capitanId'] is int) {
+          // Ambos son enteros
+          isCaptain = teamData['capitanId'] == _currentUserId;
+        } else if (_currentUserId is String && teamData['capitanId'] is int) {
+          // ID de usuario es string (posiblemente email) pero ID de capitán es int
+          debugPrint('⚠️ ID de usuario es string pero capitanId es int - intentando obtener ID real');
+          // En este punto, ya intentamos obtener el ID real desde getPerfilUsuario()
+          // Si aún es string, significa que el email no coincide con un ID numérico
+          isCaptain = false;
+        } else if (_currentUserId is int && teamData['capitanId'] is String) {
+          // ID de usuario es int pero ID de capitán es string
+          isCaptain = int.tryParse(teamData['capitanId']) == _currentUserId;
+        } else {
+          // Ambos son strings
+          isCaptain = teamData['capitanId']?.toString() == _currentUserId?.toString();
+        }
+
+        debugPrint('   Is Captain?: $isCaptain');
 
         if (mounted) {
           setState(() {
             _currentTeam = Team.fromJson(teamData);
-            _isCaptain = _currentTeam.capitanId == _currentUserId;
+            _isCaptain = isCaptain;
             debugPrint('   _currentTeam.capitanId: ${_currentTeam.capitanId}');
             debugPrint('   _currentUserId: $_currentUserId');
             debugPrint('   _isCaptain final: $_isCaptain');
@@ -65,6 +95,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
 
   Future<void> _expelMember(TeamMember member) async {
@@ -100,7 +131,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
               backgroundColor: AppTheme.successGreen,
             ),
           );
-          await _loadTeamDetails();
+          await _loadUserDataAndTeamDetails();
         }
       } catch (e) {
         if (mounted) {
@@ -134,7 +165,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                       team: _currentTeam,
                       onInviteSuccess: () {
                         // Callback para actualizar detalles del equipo después de una invitación exitosa
-                        _loadTeamDetails();
+                        _loadUserDataAndTeamDetails();
                       },
                     ),
                   ),
@@ -147,7 +178,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
           : RefreshIndicator(
-              onRefresh: _loadTeamDetails,
+              onRefresh: _loadUserDataAndTeamDetails,
               color: AppTheme.primaryOrange,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),
@@ -241,7 +272,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                         team: _currentTeam,
                         onInviteSuccess: () {
                           // Callback para actualizar detalles del equipo después de una invitación exitosa
-                          _loadTeamDetails();
+                          _loadUserDataAndTeamDetails();
                         },
                       ),
                     ),
@@ -269,7 +300,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                         team: _currentTeam,
                         onInviteSuccess: () {
                           // Callback para actualizar detalles del equipo después de una invitación exitosa
-                          _loadTeamDetails();
+                          _loadUserDataAndTeamDetails();
                         },
                       ),
                     ),
