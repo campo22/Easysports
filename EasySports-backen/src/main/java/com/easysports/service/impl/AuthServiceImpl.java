@@ -3,6 +3,7 @@ package com.easysports.service.impl;
 import com.easysports.dto.auth.LoginRequest;
 import com.easysports.dto.auth.RegisterRequest;
 import com.easysports.dto.user.UpdateUserRequest;
+import com.easysports.dto.user.PerfilUsuarioResponse;
 import com.easysports.enums.Sexo;
 import com.easysports.model.User;
 import com.easysports.repository.UserRepository;
