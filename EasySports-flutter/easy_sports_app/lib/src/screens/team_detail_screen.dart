@@ -43,10 +43,19 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
       final response = await _apiService.getEquipoPorId(_currentTeam.id);
       if (response.statusCode == 200) {
         final teamData = jsonDecode(response.body);
+        debugPrint('🔍 Team Detail Debug:');
+        debugPrint('   Current User ID: $_currentUserId');
+        debugPrint('   Team Data: $teamData');
+        debugPrint('   Team Captain ID: ${teamData['capitanId']}');
+        debugPrint('   Is Captain?: ${teamData['capitanId'] == _currentUserId}');
+
         if (mounted) {
           setState(() {
             _currentTeam = Team.fromJson(teamData);
             _isCaptain = _currentTeam.capitanId == _currentUserId;
+            debugPrint('   _currentTeam.capitanId: ${_currentTeam.capitanId}');
+            debugPrint('   _currentUserId: $_currentUserId');
+            debugPrint('   _isCaptain final: $_isCaptain');
           });
         }
       }
