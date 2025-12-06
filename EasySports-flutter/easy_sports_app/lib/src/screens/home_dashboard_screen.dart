@@ -20,6 +20,7 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   final ApiService _apiService = ApiService();
   List<Match> _matches = [];
+  int _pendingInvitationsCount = 0; // Contador para invitaciones pendientes
   bool _isLoading = true;
   int _selectedSportIndex = 0;
   String? _errorMessage;
@@ -36,6 +37,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   void initState() {
     super.initState();
     _fetchMatches();
+    _updatePendingInvitationsCount();
   }
 
   Future<void> _fetchMatches() async {
@@ -65,6 +67,43 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _updatePendingInvitationsCount() async {
+    try {
+      final response = await _apiService.getMisEquipos();
+      if (response.statusCode == 200) {
+        final responseBody = response.body;
+        List<dynamic> teamsList = [];
+
+        if (responseBody.isNotEmpty) {
+          final jsonData = json.decode(responseBody);
+          if (jsonData is Map && jsonData.containsKey('content')) {
+            teamsList = jsonData['content'] ?? [];
+          } else if (jsonData is List) {
+            teamsList = jsonData;
+          }
+        }
+
+        // Contar solo equipos con invitación pendiente ('INVITADO_PENDIENTE')
+        int count = 0;
+        for (var teamJson in teamsList) {
+          final estadoMiembro = teamJson['estadoMiembro'];
+          if (estadoMiembro != null && estadoMiembro == 'INVITADO_PENDIENTE') {
+            count++;
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _pendingInvitationsCount = count;
+          });
+        }
+      }
+    } catch (e) {
+      // En caso de error, dejar el contador como está
+      print('Error actualizando conteo de invitaciones pendientes: $e');
     }
   }
 
@@ -481,9 +520,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       minWidth: 18,
                       minHeight: 18,
                     ),
-                    child: const Text(
-                      '2',
-                      style: TextStyle(
+                    child: Text(
+                      _pendingInvitationsCount.toString(),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
