@@ -86,10 +86,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           }
         }
 
-        // Contar solo equipos con invitación pendiente ('INVITADO_PENDIENTE')
+        // Contar solo equipos con estado de membresía INVITADO_PENDIENTE
         int count = 0;
         for (var teamJson in teamsList) {
-          final estadoMiembro = teamJson['estadoMiembro'];
+          final estadoMiembro = teamJson['estadoMiembro'] as String?;
           if (estadoMiembro != null && estadoMiembro == 'INVITADO_PENDIENTE') {
             count++;
           }
@@ -103,7 +103,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       }
     } catch (e) {
       // En caso de error, dejar el contador como está
-      print('Error actualizando conteo de invitaciones pendientes: $e');
+      debugPrint('Error actualizando conteo de invitaciones pendientes: $e');
     }
   }
 

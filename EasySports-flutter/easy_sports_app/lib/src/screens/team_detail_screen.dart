@@ -34,17 +34,20 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Primero obtenemos el ID del usuario actual desde el AuthProvider
+      // Obtener el ID numérico real del usuario desde el AuthProvider
       final authProvider = context.read<AuthProvider>();
-      _currentUserId = authProvider.userId;
+      _currentUserId = await authProvider.fetchNumericUserId();
 
-      // Si el userId es un email (string con @), obtenemos el ID numérico real desde el backend
-      if (_currentUserId is String && (_currentUserId as String).contains('@')) {
-        // Obtener el perfil del usuario para obtener el ID real
-        final perfilResponse = await _apiService.getPerfilUsuario();
-        if (perfilResponse.statusCode == 200) {
-          final perfilData = jsonDecode(perfilResponse.body);
-          _currentUserId = perfilData['id'] as int?;
+      if (_currentUserId == null) {
+        // Si no podemos obtener el ID del usuario, intentamos usar el del token
+        _currentUserId = authProvider.userId;
+        if (_currentUserId is String && (_currentUserId as String).contains('@')) {
+          // Si aún es email, obtenemos el perfil del usuario
+          final perfilResponse = await _apiService.getPerfilUsuario();
+          if (perfilResponse.statusCode == 200) {
+            final perfilData = jsonDecode(perfilResponse.body);
+            _currentUserId = perfilData['id'] as int?;
+          }
         }
       }
 
