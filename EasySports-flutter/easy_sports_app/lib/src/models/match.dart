@@ -9,7 +9,9 @@ class Match {
   final String? nombreCanchaTexto;
   final int creadorId;
   final int? equipoLocalId;
+  final String? equipoLocalNombre;
   final int? equipoVisitanteId;
+  final String? equipoVisitanteNombre;
   final int maxJugadores;
   final int jugadoresActuales;
   final int? golesLocal;
@@ -27,7 +29,9 @@ class Match {
     this.nombreCanchaTexto,
     required this.creadorId,
     this.equipoLocalId,
+    this.equipoLocalNombre,
     this.equipoVisitanteId,
+    this.equipoVisitanteNombre,
     required this.maxJugadores,
     required this.jugadoresActuales,
     this.golesLocal,
@@ -47,7 +51,9 @@ class Match {
       nombreCanchaTexto: json['nombreCanchaTexto'],
       creadorId: json['creadorId'],
       equipoLocalId: json['equipoLocalId'],
+      equipoLocalNombre: json['equipoLocalNombre'],
       equipoVisitanteId: json['equipoVisitanteId'],
+      equipoVisitanteNombre: json['equipoVisitanteNombre'],
       maxJugadores: json['maxJugadores'],
       jugadoresActuales: json['jugadoresActuales'],
       golesLocal: json['golesLocal'],

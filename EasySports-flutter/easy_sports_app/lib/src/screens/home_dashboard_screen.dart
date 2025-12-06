@@ -27,10 +27,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   final List<Map<String, dynamic>> _sports = [
     {'name': 'TODOS', 'icon': Icons.sports},
-    {'name': 'FÚTBOL', 'icon': Icons.sports_soccer},
-    {'name': 'TENIS', 'icon': Icons.sports_tennis},
-    {'name': 'BALONCESTO', 'icon': Icons.sports_basketball},
-    {'name': 'VOLEIBOL', 'icon': Icons.sports_volleyball},
+    {'name': 'FUTBOL', 'icon': Icons.sports_soccer},
+    {'name': 'BASKET', 'icon': Icons.sports_basketball},
+    {'name': 'VOLEY', 'icon': Icons.sports_volleyball},
   ];
 
   @override
@@ -109,8 +108,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   List<Match> get _filteredMatches {
     if (_selectedSportIndex == 0) return _matches;
-    final sportName = _sports[_selectedSportIndex]['name'].toString();
-    return _matches.where((m) => m.deporte.toUpperCase().contains(sportName)).toList();
+    final sportName = _sports[_selectedSportIndex]['name'] as String;
+    return _matches.where((m) => m.deporte.toUpperCase() == sportName).toList();
   }
 
   @override
@@ -635,7 +634,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       _buildTeamAvatar('LOCAL', match.equipoLocalId),
                       const SizedBox(height: 8),
                       Text(
-                        'Equipo ${match.equipoLocalId ?? "?"}',
+                        match.equipoLocalNombre ?? 'Equipo Local',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -683,7 +682,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       _buildTeamAvatar('VISIT', match.equipoVisitanteId),
                       const SizedBox(height: 8),
                       Text(
-                        'Equipo ${match.equipoVisitanteId ?? "?"}',
+                        match.equipoVisitanteNombre ?? 'Equipo Visitante',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
