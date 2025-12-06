@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/team.dart';
-import 'package:easy_sports_app/src/screens/invite_member_screen.dart';
+import 'package:easy_sports_app/src/screens/invite_members_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
@@ -57,62 +57,6 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
     }
   }
 
-  Future<void> _inviteMember() async {
-    final emailController = TextEditingController();
-    
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
-        title: const Text('Invitar Miembro', style: TextStyle(color: AppTheme.primaryText)),
-        content: TextField(
-          controller: emailController,
-          decoration: const InputDecoration(
-            labelText: 'Email del usuario',
-            hintText: 'usuario@example.com',
-          ),
-          keyboardType: TextInputType.emailAddress,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondaryText)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Invitar', style: TextStyle(color: AppTheme.primaryOrange)),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true && emailController.text.isNotEmpty) {
-      try {
-        final response = await _apiService.invitarMiembro(
-          _currentTeam.id,
-          {'email': emailController.text.trim()},
-        );
-        
-        if (response.statusCode == 200 && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invitación enviada'),
-              backgroundColor: AppTheme.successGreen,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: AppTheme.errorRed,
-            ),
-          );
-        }
-      }
-    }
-  }
 
   Future<void> _expelMember(TeamMember member) async {
     final confirm = await showDialog<bool>(
@@ -177,12 +121,15 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => InviteMemberScreen(
-                      equipoId: _currentTeam.id,
-                      equipoNombre: _currentTeam.nombre,
+                    builder: (context) => InviteMembersScreen(
+                      team: _currentTeam,
+                      onInviteSuccess: () {
+                        // Callback para actualizar detalles del equipo después de una invitación exitosa
+                        _loadTeamDetails();
+                      },
                     ),
                   ),
-                ).then((_) => _loadTeamDetails());
+                );
               },
               tooltip: 'Invitar Miembro',
             ),
@@ -277,7 +224,20 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
             ),
             if (_isCaptain)
               TextButton.icon(
-                onPressed: _inviteMember,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InviteMembersScreen(
+                        team: _currentTeam,
+                        onInviteSuccess: () {
+                          // Callback para actualizar detalles del equipo después de una invitación exitosa
+                          _loadTeamDetails();
+                        },
+                      ),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.add, color: AppTheme.primaryOrange, size: 20),
                 label: const Text('Invitar', style: TextStyle(color: AppTheme.primaryOrange)),
               ),
@@ -292,7 +252,20 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
               child: PrimaryButton(
                 text: 'Invitar Nuevo Miembro',
                 icon: Icons.person_add,
-                onPressed: _inviteMember,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InviteMembersScreen(
+                        team: _currentTeam,
+                        onInviteSuccess: () {
+                          // Callback para actualizar detalles del equipo después de una invitación exitosa
+                          _loadTeamDetails();
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
