@@ -66,6 +66,14 @@ class ApiService {
   // Perfil de usuario
   Future<http.Response> getPerfilUsuario() => get('v1/perfil');
 
+  // Búsqueda de usuarios
+  Future<http.Response> searchUsers(String query, int equipoId) {
+    return getWithParams('v1/users/search', {
+      'query': query,
+      'equipoId': equipoId.toString(),
+    });
+  }
+
   // Métodos genéricos para mantener compatibilidad
   Future<http.Response> get(String endpoint) async {
     final headers = await _getHeaders();
