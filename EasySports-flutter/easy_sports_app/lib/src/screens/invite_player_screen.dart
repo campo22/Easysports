@@ -191,7 +191,7 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Container(
               decoration: BoxDecoration(
-                color: AppTheme.inputDark,
+                color: AppTheme.cardBackground,
                 borderRadius: BorderRadius.circular(30), // Borde redondeado como en el diseño
               ),
               child: TextField(
@@ -236,7 +236,7 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
     
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardDark, // Color de card como en el diseño
+        color: AppTheme.cardBackground, // Color de card como en el diseño
         borderRadius: BorderRadius.circular(16), // Bordes redondeados
       ),
       child: Padding(
@@ -301,7 +301,7 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.inputDark, // Color gris similar al diseño
+                  color: AppTheme.cardBackground, // Color gris similar al diseño
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(

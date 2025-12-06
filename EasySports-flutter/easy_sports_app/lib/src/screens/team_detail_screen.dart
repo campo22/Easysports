@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/team.dart';
 import 'package:easy_sports_app/src/screens/invite_members_screen.dart';
+import 'package:easy_sports_app/src/screens/invite_player_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
+
+import 'invite_player_screen.dart';
 
 class TeamDetailScreen extends StatefulWidget {
   final Team team;
