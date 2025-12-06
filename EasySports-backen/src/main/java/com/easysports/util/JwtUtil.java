@@ -113,8 +113,16 @@ public class JwtUtil {
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        // Puedes añadir información adicional (roles, etc.) a los claims aquí si es necesario
+        // Añadir roles
         claims.put("roles", userDetails.getAuthorities().stream().map(Object::toString).toList());
+
+        // Verificar si el userDetails es una instancia de UserDetailsImpl para obtener el ID
+        if (userDetails instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+            // Añadir ID numérico del usuario al token
+            claims.put("userId", userDetailsImpl.getUser().getId());
+        }
+
         return createToken(claims, userDetails.getUsername());
     }
 
