@@ -59,25 +59,30 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
         debugPrint('   Current User ID: $_currentUserId');
         debugPrint('   Team Data: $teamData');
         debugPrint('   Team Captain ID: ${teamData['capitanId']}');
+        debugPrint('   User Member Status: ${teamData['estadoMiembro']}');
 
         bool isCaptain = false;
 
-        // Manejar comparación entre diferentes tipos de IDs
-        if (_currentUserId is int && teamData['capitanId'] is int) {
-          // Ambos son enteros
-          isCaptain = teamData['capitanId'] == _currentUserId;
-        } else if (_currentUserId is String && teamData['capitanId'] is int) {
-          // ID de usuario es string (posiblemente email) pero ID de capitán es int
-          debugPrint('⚠️ ID de usuario es string pero capitanId es int - intentando obtener ID real');
-          // En este punto, ya intentamos obtener el ID real desde getPerfilUsuario()
-          // Si aún es string, significa que el email no coincide con un ID numérico
-          isCaptain = false;
-        } else if (_currentUserId is int && teamData['capitanId'] is String) {
-          // ID de usuario es int pero ID de capitán es string
-          isCaptain = int.tryParse(teamData['capitanId']) == _currentUserId;
-        } else {
-          // Ambos son strings
-          isCaptain = teamData['capitanId']?.toString() == _currentUserId?.toString();
+        // Ver si el estado de membresía indica que es el capitán del equipo
+        final estadoMiembro = teamData['estadoMiembro'];
+        if (estadoMiembro == 'ACEPTADO') {
+          // Verificamos si además es el capitán comparando los IDs
+          if (_currentUserId is int && teamData['capitanId'] is int) {
+            // Ambos son enteros
+            isCaptain = teamData['capitanId'] == _currentUserId;
+          } else if (_currentUserId is String && teamData['capitanId'] is int) {
+            // ID de usuario es string (posiblemente email) pero ID de capitán es int
+            debugPrint('⚠️ ID de usuario es string pero capitanId es int - intentando obtener ID real');
+            // En este punto, ya intentamos obtener el ID real desde getPerfilUsuario()
+            // Si aún es string, significa que el email no coincide con un ID numérico
+            isCaptain = false;
+          } else if (_currentUserId is int && teamData['capitanId'] is String) {
+            // ID de usuario es int pero ID de capitán es string
+            isCaptain = int.tryParse(teamData['capitanId']) == _currentUserId;
+          } else {
+            // Ambos son strings
+            isCaptain = teamData['capitanId']?.toString() == _currentUserId?.toString();
+          }
         }
 
         debugPrint('   Is Captain?: $isCaptain');

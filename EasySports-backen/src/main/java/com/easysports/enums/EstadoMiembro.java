@@ -7,5 +7,6 @@ public enum EstadoMiembro {
     INVITADO_PENDIENTE,
     ACEPTADO,
     RECHAZADO,
-    EXPULSADO
+    EXPULSADO,
+    NO_MIEMBRO
 }

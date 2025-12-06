@@ -158,9 +158,7 @@ public class TeamServiceImpl implements TeamService {
             estadoMiembro = EstadoMiembro.ACEPTADO;
         } else {
             // Usuario no es miembro ni tiene relación con el equipo
-            // Podríamos usar un valor que indique que no es miembro, pero como no existe en el enum,
-            // simplemente dejamos el valor por defecto o null
-            estadoMiembro = null; // No es miembro del equipo
+            estadoMiembro = EstadoMiembro.NO_MIEMBRO;
         }
 
         // Convertir equipo a respuesta incluyendo el estado de membresía del usuario
