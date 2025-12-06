@@ -146,4 +146,16 @@ public class TeamController {
         TeamResponse updatedTeam = teamService.updateTeam(equipoId, request, authentication);
         return ResponseEntity.ok(updatedTeam);
     }
+
+    /**
+     * Obtiene todos los equipos registrados.
+     * Útil para seleccionar rivales.
+     * @return ResponseEntity con la lista de todos los equipos.
+     */
+    @GetMapping
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<TeamResponse>> getAllTeams() {
+        List<TeamResponse> teams = teamService.getAllTeams();
+        return ResponseEntity.ok(teams);
+    }
 }

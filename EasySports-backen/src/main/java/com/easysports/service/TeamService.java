@@ -83,4 +83,11 @@ public interface TeamService {
      * @return DTO con la información del equipo actualizada.
      */
     TeamResponse updateTeam(Long equipoId, com.easysports.dto.team.UpdateTeamRequest request, Authentication authentication);
+
+    /**
+     * Obtiene una lista de todos los equipos registrados en la plataforma.
+     *
+     * @return Lista de DTOs con la información de todos los equipos.
+     */
+    List<TeamResponse> getAllTeams();
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:easy_sports_app/src/models/team.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
@@ -34,6 +36,40 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   String? _selectedEquipoLocalId;
   String? _selectedEquipoVisitanteId;
+
+  List<Team> _myTeams = [];
+  List<Team> _allTeams = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTeams();
+  }
+
+  Future<void> _loadTeams() async {
+    try {
+      final myTeamsResponse = await _apiService.getMisEquipos();
+      final allTeamsResponse = await _apiService.getAllTeams();
+
+      if (myTeamsResponse.statusCode == 200 && allTeamsResponse.statusCode == 200) {
+        final myTeamsList = (jsonDecode(myTeamsResponse.body) as List)
+            .map((t) => Team.fromJson(t))
+            .toList();
+        final allTeamsList = (jsonDecode(allTeamsResponse.body) as List)
+            .map((t) => Team.fromJson(t))
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _myTeams = myTeamsList;
+            _allTeams = allTeamsList;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading teams: $e');
+    }
+  }
 
   Future<void> _createMatch() async {
     if (_formKey.currentState!.validate()) {
@@ -143,7 +179,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
-        title: const Text('Create Match'),
+        title: const Text('Crear Partido'),
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -162,14 +198,14 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionHeader(
-            title: 'What kind of\nmatch is it?',
-            subtitle: 'Choose a type to set up your game details.',
+            title: '¿Qué tipo de\npartido es?',
+            subtitle: 'Elige un tipo para configurar los detalles.',
           ),
           const SizedBox(height: 32),
           SelectionCard(
             icon: Icons.people,
             title: 'Casual',
-            description: 'A friendly game for fun.',
+            description: 'Un partido amistoso para divertirse.',
             isSelected: _tipoEncuentro == TipoEncuentro.CASUAL,
             onTap: () => setState(() => _tipoEncuentro = TipoEncuentro.CASUAL),
           ),
@@ -177,13 +213,13 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
           SelectionCard(
             icon: Icons.emoji_events,
             title: 'Formal',
-            description: 'A competitive match.',
+            description: 'Un partido competitivo.',
             isSelected: _tipoEncuentro == TipoEncuentro.FORMAL,
             onTap: () => setState(() => _tipoEncuentro = TipoEncuentro.FORMAL),
           ),
           const Spacer(),
           PrimaryButton(
-            text: 'Continue',
+            text: 'Continuar',
             onPressed: _tipoEncuentro != null ? _nextStep : () {},
             icon: Icons.arrow_forward,
           ),
@@ -203,14 +239,14 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SectionHeader(
-              title: 'Match Details',
-              subtitle: 'Fill in the information for your match.',
+              title: 'Detalles del Partido',
+              subtitle: 'Completa la información de tu partido.',
             ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _nombreController,
               decoration: const InputDecoration(
-                labelText: 'Match Name (Optional)',
+                labelText: 'Nombre del Partido (Opcional)',
                 prefixIcon: Icon(Icons.sports_soccer, color: AppTheme.secondaryText),
               ),
             ),
@@ -218,7 +254,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             if (_tipoEncuentro == TipoEncuentro.FORMAL) _buildFormalMatchFields(),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(
-                labelText: 'Sport',
+                labelText: 'Deporte',
                 prefixIcon: Icon(Icons.sports, color: AppTheme.secondaryText),
               ),
               value: _selectedDeporte,
@@ -226,29 +262,29 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                   .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                   .toList(),
               onChanged: (v) => setState(() => _selectedDeporte = v),
-              validator: (v) => v == null ? 'Select a sport' : null,
+              validator: (v) => v == null ? 'Selecciona un deporte' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _ubicacionController,
               decoration: const InputDecoration(
-                labelText: 'Location',
+                labelText: 'Ubicación',
                 prefixIcon: Icon(Icons.location_on, color: AppTheme.secondaryText),
               ),
-              validator: (v) => (v == null || v.isEmpty) ? 'Enter a location' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Ingresa una ubicación' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _cupoController,
               decoration: const InputDecoration(
-                labelText: 'Max Players',
+                labelText: 'Jugadores Máximos',
                 prefixIcon: Icon(Icons.group, color: AppTheme.secondaryText),
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                if ((int.tryParse(v) ?? 0) < 2) return 'Min 2 players';
+                if (v == null || v.isEmpty) return 'Requerido';
+                if ((int.tryParse(v) ?? 0) < 2) return 'Mínimo 2 jugadores';
                 return null;
               },
             ),
@@ -257,12 +293,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               onTap: _pickDateTime,
               child: InputDecorator(
                 decoration: const InputDecoration(
-                  labelText: 'Date & Time',
+                  labelText: 'Fecha y Hora',
                   prefixIcon: Icon(Icons.calendar_today, color: AppTheme.secondaryText),
                 ),
                 child: Text(
                   _selectedDate == null
-                      ? 'Not selected'
+                      ? 'No seleccionada'
                       : DateFormat('MMM dd, yyyy - hh:mm a').format(_selectedDate!),
                   style: TextStyle(
                     color: _selectedDate == null ? AppTheme.secondaryText : AppTheme.primaryText,
@@ -272,7 +308,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             ),
             const SizedBox(height: 32),
             PrimaryButton(
-              text: 'Create Match',
+              text: 'Crear Partido',
               onPressed: _createMatch,
               isLoading: _isLoading,
               icon: Icons.check,
@@ -285,32 +321,49 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
   }
 
   Widget _buildFormalMatchFields() {
+    // Filter out the selected local team from the visitor list
+    final availableRivals = _allTeams.where((t) => t.id.toString() != _selectedEquipoLocalId).toList();
+
     return Column(
       children: [
         DropdownButtonFormField<String>(
           decoration: const InputDecoration(
-            labelText: 'Home Team',
+            labelText: 'Equipo Local',
             prefixIcon: Icon(Icons.shield, color: AppTheme.secondaryText),
           ),
-          items: const [
-            DropdownMenuItem(value: '1', child: Text('My Team 1')),
-            DropdownMenuItem(value: '2', child: Text('My Team 2')),
-          ],
-          onChanged: (v) => setState(() => _selectedEquipoLocalId = v),
-          validator: (v) => v == null ? 'Select home team' : null,
+          value: _selectedEquipoLocalId,
+          items: _myTeams.map((team) {
+            return DropdownMenuItem(
+              value: team.id.toString(),
+              child: Text(team.nombre),
+            );
+          }).toList(),
+          onChanged: (v) {
+            setState(() {
+              _selectedEquipoLocalId = v;
+              // Reset visitor if it clashes
+              if (_selectedEquipoVisitanteId == v) {
+                _selectedEquipoVisitanteId = null;
+              }
+            });
+          },
+          validator: (v) => v == null ? 'Selecciona equipo local' : null,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           decoration: const InputDecoration(
-            labelText: 'Away Team',
+            labelText: 'Equipo Visitante',
             prefixIcon: Icon(Icons.shield_outlined, color: AppTheme.secondaryText),
           ),
-          items: const [
-            DropdownMenuItem(value: '3', child: Text('Rival Team 1')),
-            DropdownMenuItem(value: '4', child: Text('Rival Team 2')),
-          ],
+          value: _selectedEquipoVisitanteId,
+          items: availableRivals.map((team) {
+            return DropdownMenuItem(
+              value: team.id.toString(),
+              child: Text(team.nombre),
+            );
+          }).toList(),
           onChanged: (v) => setState(() => _selectedEquipoVisitanteId = v),
-          validator: (v) => v == null ? 'Select away team' : null,
+          validator: (v) => v == null ? 'Selecciona equipo visitante' : null,
         ),
         const SizedBox(height: 16),
       ],

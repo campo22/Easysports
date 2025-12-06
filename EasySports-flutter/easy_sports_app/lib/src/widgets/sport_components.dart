@@ -91,25 +91,45 @@ class SportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.cardBackground,
+            AppTheme.cardBackground.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppTheme.cardBackgroundLight,
           width: 1,
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(16),
-            child: child,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
+        ],
+      ),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(16.0),
+        child: child,
+      ),
+    );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: card,
       ),
     );
   }

@@ -43,6 +43,7 @@ class ApiService {
 
   // Equipos
   Future<http.Response> getMisEquipos() => get('v1/teams/mios');
+  Future<http.Response> getAllTeams() => get('v1/teams');
   Future<http.Response> crearEquipo(Map<String, dynamic> data) => post('v1/teams', data);
   Future<http.Response> getEquipoPorId(int equipoId) => get('v1/teams/$equipoId');
   Future<http.Response> actualizarEquipo(int equipoId, Map<String, dynamic> data) => put('v1/teams/$equipoId', data);

@@ -219,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: Border.all(color: AppTheme.primaryOrange, width: 1),
                     ),
                     child: const Text(
-                      'Stream Sports Without Limits',
+                      'Deportes Sin Límites',
                       style: TextStyle(
                         color: AppTheme.primaryOrange,
                         fontSize: 12,
@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   // Título principal
                   const Text(
-                    'NEVER MISS A\nMOMENT OF\nTHE GAME',
+                    'NUNCA TE PIERDAS\nUN MOMENTO\nDEL JUEGO',
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 32),
                   // Botón principal
                   PrimaryButton(
-                    text: 'Get Started',
+                    text: 'Comenzar',
                     onPressed: _showLoginSheet,
                     icon: Icons.arrow_forward,
                   ),

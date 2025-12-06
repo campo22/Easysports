@@ -81,11 +81,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(Icons.home, 'Home', 0),
-          _buildNavItem(Icons.sports_soccer, 'Matches', 1),
+          _buildNavItem(Icons.home, 'Inicio', 0),
+          _buildNavItem(Icons.sports_soccer, 'Partidos', 1),
           _buildCenterButton(),
-          _buildNavItem(Icons.emoji_events, 'Leagues', 3),
-          _buildNavItem(Icons.person, 'Profile', 4),
+          _buildNavItem(Icons.emoji_events, 'Ligas', 3),
+          _buildNavItem(Icons.person, 'Perfil', 4),
         ],
       ),
     );

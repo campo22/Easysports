@@ -203,6 +203,14 @@ public class TeamServiceImpl implements TeamService {
         return toResponse(equipoActualizado);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<TeamResponse> getAllTeams() {
+        return teamRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     private TeamResponse toResponse(Team team) {
         List<com.easysports.dto.team.MiembroResponse> miembrosResponse = team.getMiembrosEquipo() != null
                 ? team.getMiembrosEquipo().stream()
