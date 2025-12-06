@@ -47,7 +47,8 @@ class _TeamInvitationsScreenState extends State<TeamInvitationsScreen> {
 
         if (mounted) {
           setState(() {
-            // Filtrar solo equipos donde el usuario tiene invitación pendiente
+            // Mostrar todos los equipos en los que el usuario está involucrado
+            // Puede ser como miembro activo o con invitación pendiente
             final allTeams = teamsList.map((teamJson) => Team.fromJson(teamJson)).toList();
 
             debugPrint('🔍 Equipos antes de filtrar:');
@@ -55,11 +56,10 @@ class _TeamInvitationsScreenState extends State<TeamInvitationsScreen> {
               debugPrint('  - ${team.nombre}: estadoMiembro=${team.estadoMiembro}');
             }
 
-            _pendingInvitations = allTeams
-                .where((team) => team.estadoMiembro != null && team.estadoMiembro == 'INVITADO_PENDIENTE')
-                .toList();
+            // Mostrar todos los equipos, no solo las invitaciones pendientes
+            _pendingInvitations = allTeams;
 
-            debugPrint('✅ Invitaciones pendientes filtradas: ${_pendingInvitations.length}');
+            debugPrint('✅ Equipos totales mostrados: ${_pendingInvitations.length}');
           });
         }
       }
@@ -264,41 +264,63 @@ class _TeamInvitationsScreenState extends State<TeamInvitationsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _respondToInvitation(team.id, false),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: AppTheme.errorRed.withOpacity(0.5), width: 2),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Rechazar',
-                      style: TextStyle(color: AppTheme.errorRed, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () => _respondToInvitation(team.id, true),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: AppTheme.successGreen,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Aceptar',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            if (team.estadoMiembro == 'INVITADO_PENDIENTE')
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _respondToInvitation(team.id, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: AppTheme.errorRed.withOpacity(0.5), width: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text(
+                        'Rechazar',
+                        style: TextStyle(color: AppTheme.errorRed, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () => _respondToInvitation(team.id, true),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppTheme.successGreen,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Aceptar',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: null, // Deshabilitado temporalmente
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppTheme.cardBackground, // Gris para indicar deshabilitado
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Ver equipo',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
