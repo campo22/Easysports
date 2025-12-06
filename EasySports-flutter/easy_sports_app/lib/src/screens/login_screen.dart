@@ -36,7 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
               _passwordController.text,
             );
         if (mounted) {
-           Navigator.pop(context);
+          // Usar Navigator.pushReplacement para evitar múltiples instancias de la pantalla
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
         }
       } catch (e) {
         if (mounted) {

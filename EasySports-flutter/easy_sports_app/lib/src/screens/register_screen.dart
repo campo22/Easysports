@@ -57,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               backgroundColor: AppTheme.successGreen,
             ),
           );
-          Navigator.of(context).pop(); 
+          Navigator.pushReplacementNamed(context, '/login'); 
         }
 
       } catch (e) {
