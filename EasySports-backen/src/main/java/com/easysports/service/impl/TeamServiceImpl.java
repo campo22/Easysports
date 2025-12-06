@@ -195,17 +195,32 @@ public class TeamServiceImpl implements TeamService {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         Long usuarioId = userDetails.getUser().getId();
 
-        List<MiembroEquipo> relaciones = miembroEquipoRepository.findByUsuarioIdAndEstado(usuarioId, EstadoMiembro.ACEPTADO);
+        List<MiembroEquipo> relacionesAceptadas = miembroEquipoRepository.findByUsuarioIdAndEstado(usuarioId, EstadoMiembro.ACEPTADO);
         List<MiembroEquipo> invitacionesPendientes = miembroEquipoRepository.findByUsuarioIdAndEstado(usuarioId, EstadoMiembro.INVITADO_PENDIENTE);
 
-        // Combinar ambas listas y convertir a DTOs, evitando duplicados si fuera el caso
-        return relaciones.stream()
-                .map(MiembroEquipo::getEquipo)
-                .collect(Collectors.toSet()) // Usar Set para eliminar duplicados de equipos
-                .stream()
-                .map(this::toResponse)
+        // Combinar ambas listas
+        List<MiembroEquipo> todasLasRelaciones = new java.util.ArrayList<>(relacionesAceptadas);
+        todasLasRelaciones.addAll(invitacionesPendientes);
+
+        // Convertir a DTOs, asegurando que cada uno tenga el estado de membresía correcto
+        return todasLasRelaciones.stream()
+                .map(this::convertirMiembroEquipoATeamResponse)
+                .distinct() // Evitar equipos duplicados si un usuario es miembro y tiene una invitación (caso anómalo)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Convierte una entidad MiembroEquipo a un DTO TeamResponse, incluyendo el estado de la membresía.
+     * @param miembro La relación MiembroEquipo.
+     * @return El DTO TeamResponse con el estado de membresía correcto.
+     */
+    private TeamResponse convertirMiembroEquipoATeamResponse(MiembroEquipo miembro) {
+        Team team = miembro.getEquipo();
+        TeamResponse response = toResponse(team); // Reutiliza el mapeo base
+        response.setEstadoMiembro(miembro.getEstado()); // Establece el estado específico de esta relación
+        return response;
+    }
+
 
     @Override
     @Transactional
