@@ -469,26 +469,30 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Hola, $userName!',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryText,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '¡Hola, $userName!',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryText,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Encuentra tu próximo partido',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.secondaryText,
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Encuentra tu próximo partido',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.secondaryText,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             // Ícono de notificaciones con badge
             Stack(
