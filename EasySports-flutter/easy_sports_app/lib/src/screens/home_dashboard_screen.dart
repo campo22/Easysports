@@ -109,7 +109,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   List<Match> get _filteredMatches {
     if (_selectedSportIndex == 0) return _matches;
     final sportName = _sports[_selectedSportIndex]['name'] as String;
-    return _matches.where((m) => m.deporte.toUpperCase() == sportName).toList();
+
+    debugPrint("🔍 Filtrando por deporte: '$sportName'");
+
+    return _matches.where((m) {
+      final matchSport = m.deporte.toUpperCase();
+      final doesMatch = matchSport == sportName;
+      debugPrint("  - Partido ID ${m.id} (${matchSport}): ${doesMatch ? 'COINCIDE' : 'NO COINCIDE'}");
+      return doesMatch;
+    }).toList();
   }
 
   @override
@@ -565,209 +573,112 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
                   child: Text(
-                    'No hay partidos disponibles',
+                    'No hay partidos para el filtro seleccionado.',
                     style: TextStyle(color: AppTheme.secondaryText),
                   ),
                 ),
               )
             else
-              ...matches.map((match) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildMatchCard(match),
-              )),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: matches.length,
+                itemBuilder: (context, index) {
+                  return _buildMatchCard(matches[index]);
+                },
+              ),
           ],
         ),
       ),
     );
   }
 
+  String _buildMatchTitle(Match match) {
+    if (match.tipo == 'FORMAL') {
+      final local = match.equipoLocalNombre ?? 'Equipo Local';
+      final visitante = match.equipoVisitanteNombre ?? 'Equipo Visitante';
+      return '$local vs. $visitante';
+    } else {
+      // Para partidos casuales, un título más genérico
+      return 'Partido de ${match.deporte}';
+    }
+  }
+
   Widget _buildMatchCard(Match match) {
-    final bool isFormal = match.tipo == 'FORMAL';
-    final bool hasScore = match.golesLocal != null && match.golesVisitante != null;
-    
-    return SportCard(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MatchDetailScreen(match: match),
-          ),
-        );
-      },
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con tipo y estado
+          // Header de la tarjeta: Icono y Nombre del Deporte
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isFormal ? AppTheme.primaryOrange.withOpacity(0.2) : AppTheme.cardBackgroundLight,
-                  borderRadius: BorderRadius.circular(8),
+              Icon(_getSportIcon(match.deporte), color: AppTheme.primaryOrange, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                match.deporte.toUpperCase(),
+                style: const TextStyle(
+                  color: AppTheme.primaryOrange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-                child: Text(
-                  isFormal ? 'FORMAL' : 'CASUAL',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isFormal ? AppTheme.primaryOrange : AppTheme.secondaryText,
-                  ),
-                ),
-              ),
-              StatusBadge(
-                text: match.estado,
-                color: match.estado == 'ABIERTO' ? AppTheme.activeGreen : AppTheme.closedRed,
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Equipos o deporte
-          if (isFormal && (match.equipoLocalId != null || match.equipoVisitanteId != null))
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Equipo Local
-                Expanded(
-                  child: Column(
-                    children: [
-                      _buildTeamAvatar('LOCAL', match.equipoLocalId),
-                      const SizedBox(height: 8),
-                      Text(
-                        match.equipoLocalNombre ?? 'Equipo Local',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryText,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                // Marcador o VS
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: hasScore
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBackgroundLight,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${match.golesLocal} : ${match.golesVisitante}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryOrange,
-                            ),
-                          ),
-                        )
-                      : const Text(
-                          'VS',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.secondaryText,
-                          ),
-                        ),
-                ),
-                // Equipo Visitante
-                Expanded(
-                  child: Column(
-                    children: [
-                      _buildTeamAvatar('VISIT', match.equipoVisitanteId),
-                      const SizedBox(height: 8),
-                      Text(
-                        match.equipoVisitanteNombre ?? 'Equipo Visitante',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryText,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          else
-            // Partido casual - mostrar solo deporte
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.orangeGradient,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getSportIcon(match.deporte),
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Partido ${match.deporte}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppTheme.primaryText,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${match.jugadoresActuales}/${match.maxJugadores} jugadores',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.secondaryText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           const SizedBox(height: 12),
-          // Footer con fecha y ubicación
+          
+          // Título del partido
+          Text(
+            _buildMatchTitle(match),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryText,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Detalles: Hora y Ubicación
           Row(
             children: [
-              Icon(Icons.calendar_today, size: 14, color: AppTheme.secondaryText),
-              const SizedBox(width: 4),
+              const Icon(Icons.schedule, color: AppTheme.secondaryText, size: 16),
+              const SizedBox(width: 8),
               Text(
-                '${match.fechaProgramada.day}/${match.fechaProgramada.month}/${match.fechaProgramada.year}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.secondaryText,
-                ),
+                TimeOfDay.fromDateTime(match.fechaProgramada).format(context),
+                style: const TextStyle(color: AppTheme.secondaryText, fontSize: 14),
               ),
-              const SizedBox(width: 16),
-              Icon(Icons.location_on, size: 14, color: AppTheme.secondaryText),
-              const SizedBox(width: 4),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.location_on, color: AppTheme.secondaryText, size: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  match.nombreCanchaTexto ?? 'Por definir',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.secondaryText,
-                  ),
-                  maxLines: 1,
+                  match.nombreCanchaTexto ?? 'Ubicación por definir',
+                  style: const TextStyle(color: AppTheme.secondaryText, fontSize: 14),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // Estado del partido
+          Align(
+            alignment: Alignment.centerLeft,
+            child: StatusBadge(
+              text: match.estado,
+              color: match.estado == 'ABIERTO' ? AppTheme.activeGreen : AppTheme.closedRed,
+            ),
           ),
         ],
       ),
