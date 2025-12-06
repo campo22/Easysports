@@ -1,0 +1,18 @@
+feat: Enhance team functionalities and UI localization
+
+This commit introduces backend and frontend enhancements to support formal matches with team selection, and localizes the UI to Spanish.
+
+**Backend:**
+- Added a new endpoint `GET /v1/teams` to retrieve all teams.
+- Implemented the corresponding service layer to fetch all teams from the database.
+
+**Frontend:**
+- **Create Match Screen**: Now fetches and displays the user's teams and all other teams for selection in formal matches. The UI has been translated to Spanish.
+- **Home Dashboard**:
+    - The main floating action button now creates a team instead of a match.
+    - The UI has been localized to Spanish.
+    - Match cards have been redesigned for better readability and information display.
+    - The "Top Leaders" section has been visually improved.
+- **Localization**: The bottom navigation bar and login screen are now in Spanish.
+- **API Service**: A new `getAllTeams()` method has been added to the API service.
+- **UI Components**: The `SportCard` widget has been updated with a new visual style.

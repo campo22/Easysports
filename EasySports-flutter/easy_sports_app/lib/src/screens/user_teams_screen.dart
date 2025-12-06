@@ -4,7 +4,7 @@ import 'package:easy_sports_app/src/screens/create_team_screen.dart';
 import 'package:easy_sports_app/src/screens/team_detail_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
-import 'package:easy_sports_app/src/widgets/sport_components.dart';
+import 'package:easy_sports_app/src/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 
 class UserTeamsScreen extends StatefulWidget {
@@ -126,7 +126,11 @@ class UserTeamsScreenState extends State<UserTeamsScreen> {
               // List
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
+                    ? ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                        itemCount: 3,
+                        itemBuilder: (context, index) => const TeamCardSkeleton(),
+                      )
                     : _userTeams.isEmpty
                         ? _buildEmptyState()
                         : RefreshIndicator(
@@ -215,87 +219,192 @@ class UserTeamsScreenState extends State<UserTeamsScreen> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF2A211B), // Card color from HTML
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            // Top Section: Info & Logo
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        team.nombre,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Deporte: ${team.tipoDeporte}',
-                        style: TextStyle(
-                          color: AppTheme.primaryOrange.withOpacity(0.8), // Amber 200/60ish
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Place holder Logo
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryOrange.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    image: const DecorationImage(
-                      image: NetworkImage("https://ui-avatars.com/api/?background=random&color=fff&size=128"), // Placeholder
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      team.nombre.isNotEmpty ? team.nombre[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        color: AppTheme.primaryOrange,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Divider(color: Colors.white.withOpacity(0.1), height: 1),
-            const SizedBox(height: 16),
-            // Bottom Section: Stats
-            Row(
-              children: [
-                const Icon(Icons.event_available, size: 20, color: AppTheme.primaryOrange),
-                const SizedBox(width: 8),
-                const Text(
-                  'Próx: --', // Placeholder
-                  style: TextStyle(color: AppTheme.secondaryText, fontSize: 13),
-                ),
-                const SizedBox(width: 24),
-                const Icon(Icons.equalizer, size: 20, color: AppTheme.primaryOrange),
-                const SizedBox(width: 8),
-                Text(
-                  'Ganados: ${team.partidosGanados}',
-                  style: const TextStyle(color: AppTheme.secondaryText, fontSize: 13),
-                ),
-              ],
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.cardBackground,
+              AppTheme.cardBackground.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.cardBackgroundLight.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Top Section: Info & Logo
+              Row(
+                children: [
+                  // Logo circular con gradiente
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.orangeGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryOrange.withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        team.nombre.isNotEmpty ? team.nombre[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          team.nombre,
+                          style: const TextStyle(
+                            color: AppTheme.primaryText,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryOrange.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.primaryOrange.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            team.tipoDeporte.toUpperCase(),
+                            style: const TextStyle(
+                              color: AppTheme.primaryOrange,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Indicador de capitán si aplica
+                  if (team.rolUsuario == 'CAPITAN')
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.orangeGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.star,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(color: AppTheme.cardBackgroundLight.withOpacity(0.3), height: 1),
+              const SizedBox(height: 16),
+              // Bottom Section: Stats con badges premium
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatBadge(
+                      icon: Icons.people,
+                      label: 'Miembros',
+                      value: '${team.miembros.length}',
+                      color: AppTheme.primaryOrange,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatBadge(
+                      icon: Icons.emoji_events,
+                      label: 'Victorias',
+                      value: '${team.partidosGanados}',
+                      color: AppTheme.activeGreen,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatBadge(
+                      icon: Icons.sports_soccer,
+                      label: 'Partidos',
+                      value: '${team.partidosGanados + team.partidosPerdidos}',
+                      color: AppTheme.secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatBadge({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: color.withOpacity(0.7),
+              fontSize: 10,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

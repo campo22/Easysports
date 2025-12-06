@@ -19,123 +19,239 @@ class InviteMemberScreen extends StatefulWidget {
 
 class _InviteMemberScreenState extends State<InviteMemberScreen> {
   final ApiService _apiService = ApiService();
-  final TextEditingController _emailController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
+  final Set<String> _invitedEmails = {};
 
-  Future<void> _inviteMember() async {
-    if (!_formKey.currentState!.validate()) return;
+  // Jugadores sugeridos (datos de ejemplo - en producción vendrían del backend)
+  final List<Map<String, String>> _suggestedPlayers = [
+    {'name': 'Alex Morgan', 'position': 'Delantero', 'email': 'alex.morgan@example.com'},
+    {'name': 'Megan Rapinoe', 'position': 'Mediocampista', 'email': 'megan.rapinoe@example.com'},
+    {'name': 'Cristiano Ronaldo', 'position': 'Delantero', 'email': 'cristiano@example.com'},
+    {'name': 'Sam Kerr', 'position': 'Delantero', 'email': 'sam.kerr@example.com'},
+    {'name': 'Kevin De Bruyne', 'position': 'Mediocampista', 'email': 'kevin.db@example.com'},
+  ];
 
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _inviteMember(String email, String name) async {
+    setState(() => _isLoading = true);
 
     try {
       final response = await _apiService.invitarMiembro(
         widget.equipoId,
-        {'email': _emailController.text},
+        {'email': email},
       );
       
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && mounted) {
+        setState(() => _invitedEmails.add(email));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Miembro invitado exitosamente!')),
+          SnackBar(
+            content: Text('Invitación enviada a $name'),
+            backgroundColor: AppTheme.successGreen,
+          ),
         );
-        Navigator.pop(context); // Regresar a la pantalla anterior
-      } else {
-        final contentType = response.headers['content-type'];
-        String errorMessage = 'Error al invitar miembro';
-        
-        if (contentType != null && contentType.contains('application/json')) {
-          final errorData = json.decode(response.body);
-          errorMessage = errorData['message'] ?? 'Error en el proceso de invitación';
-        } else {
-          errorMessage = response.body.isNotEmpty 
-            ? response.body 
-            : 'Código de error: ${response.statusCode}';
-        }
-        
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(
+            content: Text('Error al invitar a $name'),
+            backgroundColor: AppTheme.errorRed,
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error de red: $e')),
-      );
-    } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
-        title: Text('Invitar a ${widget.equipoNombre}'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Invita a un nuevo miembro a tu equipo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email del Miembro',
-                  hintText: 'email@ejemplo.com',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa un email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Por favor ingresa un email válido';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _inviteMember,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text(
-                        'Enviar Invitación',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-              const SizedBox(height: 16),
-              const Text(
-                'El usuario recibirá una invitación para unirse al equipo. Podrá aceptarla o rechazarla desde su perfil.',
-                style: TextStyle(color: AppTheme.secondaryText, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-            ],
+        backgroundColor: AppTheme.backgroundDark,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppTheme.primaryText),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Invitar Jugador',
+          style: TextStyle(
+            color: AppTheme.primaryText,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          // Barra de búsqueda
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppTheme.cardBackgroundLight,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: AppTheme.primaryText),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por nombre o email',
+                  hintStyle: const TextStyle(color: AppTheme.secondaryText),
+                  prefixIcon: const Icon(Icons.search, color: AppTheme.secondaryText),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+                onChanged: (value) {
+                  setState(() {}); // Actualizar filtro
+                },
+              ),
+            ),
+          ),
+
+          // Lista de jugadores sugeridos
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Text(
+                      'Jugadores Sugeridos',
+                      style: TextStyle(
+                        color: AppTheme.primaryText,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: _suggestedPlayers
+                          .where((player) {
+                            if (_searchController.text.isEmpty) return true;
+                            final search = _searchController.text.toLowerCase();
+                            return player['name']!.toLowerCase().contains(search) ||
+                                   player['email']!.toLowerCase().contains(search);
+                          })
+                          .map((player) => _buildPlayerCard(player))
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerCard(Map<String, String> player) {
+    final isInvited = _invitedEmails.contains(player['email']);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: AppTheme.orangeGradient,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                player['name']![0].toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player['name']!,
+                  style: const TextStyle(
+                    color: AppTheme.primaryText,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  player['position']!,
+                  style: const TextStyle(
+                    color: AppTheme.secondaryText,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Botón
+          ElevatedButton(
+            onPressed: isInvited || _isLoading
+                ? null
+                : () => _inviteMember(player['email']!, player['name']!),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isInvited ? AppTheme.cardBackgroundLight : AppTheme.primaryOrange,
+              foregroundColor: isInvited ? AppTheme.secondaryText : Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 0,
+            ),
+            child: Text(
+              isInvited ? 'Invitado' : 'Invitar',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

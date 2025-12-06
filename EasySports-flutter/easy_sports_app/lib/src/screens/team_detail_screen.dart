@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/team.dart';
+import 'package:easy_sports_app/src/screens/invite_member_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
@@ -172,7 +173,17 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
           if (_isCaptain)
             IconButton(
               icon: const Icon(Icons.person_add, color: AppTheme.primaryOrange),
-              onPressed: _inviteMember,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InviteMemberScreen(
+                      equipoId: _currentTeam.id,
+                      equipoNombre: _currentTeam.nombre,
+                    ),
+                  ),
+                ).then((_) => _loadTeamDetails());
+              },
               tooltip: 'Invitar Miembro',
             ),
         ],

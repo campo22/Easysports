@@ -111,56 +111,47 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('Match #${_currentMatch.codigo}'),
         backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Detalles del Partido',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         actions: [
-          if (canRegisterResult)
-            IconButton(
-              icon: const Icon(Icons.edit_note, color: AppTheme.primaryOrange),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RegisterResultScreen(match: _currentMatch),
-                  ),
-                ).then((_) => _fetchMatchDetails());
-              },
-            ),
+          IconButton(
+            icon: const Icon(Icons.more_horiz, color: Colors.white),
+            onPressed: () {},
+          ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
           : _errorMessage != null
               ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _fetchMatchDetails,
-                  color: AppTheme.primaryOrange,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildMatchHeader(),
-                        const SizedBox(height: 20),
-                        _buildMatchInfo(),
-                        const SizedBox(height: 20),
-                        if (_currentMatch.estado == 'FINALIZADO' && 
-                            _currentMatch.golesLocal != null)
-                          _buildResultSection(),
-                        const SizedBox(height: 20),
-                        _buildDetailsSection(),
-                        if (canJoin) ...[
-                          const SizedBox(height: 20),
-                          PrimaryButton(
-                            text: 'Unirse al Partido',
-                            onPressed: _joinMatch,
-                            icon: Icons.person_add,
-                          ),
+              : Stack(
+                  children: [
+                    SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPremiumHeader(),
+                          const SizedBox(height: 16),
+                          _buildLocationSection(),
+                          const SizedBox(height: 16),
+                          _buildPlayersSection(),
+                          const SizedBox(height: 100), // Espacio para botones fijos
                         ],
-                      ],
+                      ),
                     ),
-                  ),
+                    _buildBottomButtons(canJoin, canRegisterResult),
+                  ],
                 ),
     );
   }
@@ -473,5 +464,286 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return Icons.sports_volleyball;
     }
     return Icons.sports;
+  }
+
+  // Nuevos métodos premium
+  Widget _buildPremiumHeader() {
+    final dateFormat = DateFormat('EEE, MMM dd • h:mm a', 'es');
+    
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: const NetworkImage('https://images.unsplash.com/photo-1459865264687-595d652de67e?w=800'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  // Equipo Local
+                  Column(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.orangeGradient,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Center(
+                          child: Text('A', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Equipo A', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  // Contador/Marcador
+                  Column(
+                    children: [
+                      Text(
+                        _currentMatch.estado == 'FINALIZADO' ? 'FINALIZADO' : 'INICIA EN',
+                        style: const TextStyle(color: AppTheme.secondaryText, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _currentMatch.estado == 'FINALIZADO' 
+                            ? '${_currentMatch.golesLocal ?? 0} - ${_currentMatch.golesVisitante ?? 0}'
+                            : '2d 15h',
+                        style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  // Equipo Visitante
+                  Column(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [Colors.blue, Colors.blue.shade700]),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Center(
+                          child: Text('B', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Equipo B', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.sports_soccer, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      _currentMatch.deporte.toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.event, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      dateFormat.format(_currentMatch.fechaProgramada),
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ubicación y Detalles',
+            style: TextStyle(color: AppTheme.primaryText, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.cardBackgroundLight.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryOrange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.location_on, color: AppTheme.primaryOrange, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _currentMatch.nombreCanchaTexto ?? 'Cancha Deportiva',
+                        style: const TextStyle(color: AppTheme.primaryText, fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        '123 Victory Lane, Sportsville',
+                        style: TextStyle(color: AppTheme.secondaryText, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppTheme.secondaryText),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayersSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Jugadores Confirmados (${_currentMatch.jugadoresActuales}/${_currentMatch.maxJugadores})',
+            style: const TextStyle(color: AppTheme.primaryText, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.cardBackgroundLight.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: [
+                Wrap(
+                  spacing: -8,
+                  children: List.generate(
+                    _currentMatch.jugadoresActuales.clamp(0, 6),
+                    (index) => Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.orangeGradient,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.cardBackground, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          String.fromCharCode(65 + index),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_currentMatch.jugadoresActuales > 6)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      '+${_currentMatch.jugadoresActuales - 6} más',
+                      style: const TextStyle(color: AppTheme.secondaryText, fontSize: 14),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                const Divider(color: AppTheme.cardBackgroundLight, height: 1),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    'Ver todos los jugadores',
+                    style: TextStyle(color: AppTheme.primaryOrange, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomButtons(bool canJoin, bool canRegisterResult) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundDark.withOpacity(0.95),
+          border: Border(top: BorderSide(color: AppTheme.cardBackgroundLight.withOpacity(0.3))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: AppTheme.primaryOrange, width: 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                ),
+                child: const Text(
+                  'Chat',
+                  style: TextStyle(color: AppTheme.primaryOrange, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: canJoin ? _joinMatch : (canRegisterResult ? () {} : null),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: AppTheme.primaryOrange,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                ),
+                child: Text(
+                  canJoin ? 'Unirse' : (canRegisterResult ? 'Registrar' : 'Confirmar'),
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

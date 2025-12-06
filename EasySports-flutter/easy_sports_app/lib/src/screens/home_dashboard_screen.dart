@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:easy_sports_app/src/models/match.dart';
 import 'package:easy_sports_app/src/screens/create_team_screen.dart';
 import 'package:easy_sports_app/src/screens/match_detail_screen.dart';
+import 'package:easy_sports_app/src/screens/team_invitations_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
@@ -134,39 +135,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  SliverToBoxAdapter _buildHeader(String userName) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hola',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.secondaryText,
-                  ),
-                ),
-                Text(
-                  userName,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: AppTheme.primaryText),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   SliverToBoxAdapter _buildCategories() {
     return SliverToBoxAdapter(
@@ -449,6 +418,83 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           fontSize: 12,
           color: AppTheme.primaryOrange,
           fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(String userName) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Hola, $userName!',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Encuentra tu próximo partido',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.secondaryText,
+                  ),
+                ),
+              ],
+            ),
+            // Ícono de notificaciones con badge
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined, size: 28),
+                  color: AppTheme.primaryText,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TeamInvitationsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                // Badge con contador (simulado por ahora)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.errorRed,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.backgroundDark, width: 2),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: const Text(
+                      '2',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -742,6 +788,219 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       return Icons.sports_volleyball;
     }
     return Icons.sports;
+  }
+
+  SliverToBoxAdapter _buildStandingsSection() {
+    // Datos de ejemplo para la tabla de posiciones
+    final standings = [
+      {'pos': 1, 'team': 'FC Barcelona', 'pj': 10, 'v': 8, 'e': 1, 'd': 1, 'pts': 25},
+      {'pos': 2, 'team': 'Real Madrid', 'pj': 10, 'v': 7, 'e': 2, 'd': 1, 'pts': 23},
+      {'pos': 3, 'team': 'Atlético', 'pj': 10, 'v': 6, 'e': 3, 'd': 1, 'pts': 21},
+      {'pos': 4, 'team': 'Sevilla FC', 'pj': 10, 'v': 5, 'e': 2, 'd': 3, 'pts': 17},
+      {'pos': 5, 'team': 'Valencia CF', 'pj': 10, 'v': 4, 'e': 3, 'd': 3, 'pts': 15},
+    ];
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tabla de Posiciones',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryText,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    'Ver Completa',
+                    style: TextStyle(
+                      color: AppTheme.primaryOrange,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.cardBackground,
+                    AppTheme.cardBackground.withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.cardBackgroundLight,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryOrange.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 30, child: Text('#', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryText))),
+                        const Expanded(child: Text('Equipo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryText))),
+                        SizedBox(width: 30, child: Text('PJ', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryText))),
+                        const SizedBox(width: 8),
+                        SizedBox(width: 30, child: Text('V', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryText))),
+                        const SizedBox(width: 8),
+                        SizedBox(width: 30, child: Text('E', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryText))),
+                        const SizedBox(width: 8),
+                        SizedBox(width: 30, child: Text('D', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryText))),
+                        const SizedBox(width: 8),
+                        SizedBox(width: 40, child: Text('PTS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryOrange))),
+                      ],
+                    ),
+                  ),
+                  // Filas
+                  ...standings.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final team = entry.value;
+                    final isFirst = index == 0;
+                    
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isFirst ? AppTheme.primaryOrange.withOpacity(0.05) : null,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.cardBackgroundLight.withOpacity(0.3),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 30,
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                gradient: isFirst ? AppTheme.orangeGradient : null,
+                                color: isFirst ? null : AppTheme.cardBackgroundLight,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${team['pos']}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: isFirst ? Colors.white : AppTheme.secondaryText,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.primaryOrange,
+                                        AppTheme.primaryOrange.withOpacity(0.7),
+                                      ],
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      team['team'].toString().substring(0, 1),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    team['team'].toString(),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isFirst ? FontWeight.bold : FontWeight.normal,
+                                      color: AppTheme.primaryText,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 30, child: Text('${team['pj']}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.secondaryText))),
+                          const SizedBox(width: 8),
+                          SizedBox(width: 30, child: Text('${team['v']}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.activeGreen))),
+                          const SizedBox(width: 8),
+                          SizedBox(width: 30, child: Text('${team['e']}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.secondaryText))),
+                          const SizedBox(width: 8),
+                          SizedBox(width: 30, child: Text('${team['d']}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.closedRed))),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 40,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryOrange.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${team['pts']}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryOrange,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
