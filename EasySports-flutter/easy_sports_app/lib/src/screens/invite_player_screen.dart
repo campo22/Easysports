@@ -35,10 +35,12 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint("✅ [InvitePlayerScreen] initState: La pantalla se está inicializando.");
     _loadPlayers();
   }
 
   Future<void> _loadPlayers() async {
+    debugPrint("🔄 [InvitePlayerScreen] _loadPlayers: Iniciando la carga de jugadores...");
     setState(() {
       _isLoading = true;
     });
@@ -87,6 +89,7 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
       ];
       
       if (mounted) {
+        debugPrint("✅ [InvitePlayerScreen] _loadPlayers: Carga exitosa. ${_allPlayers.length} jugadores cargados.");
         setState(() {
           _allPlayers = samplePlayers;
           _filteredPlayers = samplePlayers;
@@ -95,6 +98,7 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
       }
     } catch (e) {
       if (mounted) {
+        debugPrint("❌ [InvitePlayerScreen] _loadPlayers: Error al cargar jugadores: $e");
         setState(() {
           _isLoading = false;
         });
@@ -216,6 +220,12 @@ class _InvitePlayerScreenState extends State<InvitePlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("🎨 [InvitePlayerScreen] build: Renderizando la pantalla. isLoading: $_isLoading, Jugadores filtrados: ${_filteredPlayers.length}");
+
+    // NOTA: Todos los botones de invitación en esta pantalla han sido unificados
+    // para navegar a `InvitePlayerScreen`. Esto asegura que siempre se utilice
+    // la interfaz moderna con selección múltiple, eliminando la confusión con
+    // pantallas de invitación antiguas.
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(

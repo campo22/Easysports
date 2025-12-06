@@ -36,22 +36,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    // Verificar que los controladores estén montados antes de desecharlos
-    if (_nombreCompletoController.mounted) {
-      _nombreCompletoController.dispose();
-    }
-    if (_emailController.mounted) {
-      _emailController.dispose();
-    }
-    if (_passwordController.mounted) {
-      _passwordController.dispose();
-    }
-    if (_edadAniosController.mounted) {
-      _edadAniosController.dispose();
-    }
-    if (_edadMesesController.mounted) {
-      _edadMesesController.dispose();
-    }
+    _nombreCompletoController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _edadAniosController.dispose();
+    _edadMesesController.dispose();
     super.dispose();
   }
 

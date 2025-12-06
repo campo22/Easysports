@@ -21,7 +21,7 @@ class NavigationService {
     );
   }
 
-  bool pop<T extends Object?>([T? result]) {
-    return navigatorKey.currentState!.pop(result);
+  void pop<T extends Object?>([T? result]) {
+    navigatorKey.currentState!.pop(result);
   }
 }

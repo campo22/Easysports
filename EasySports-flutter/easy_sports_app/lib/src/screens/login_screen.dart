@@ -28,13 +28,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    // Verificar que los controladores estén montados antes de desecharlos
-    if (_emailController.mounted) {
-      _emailController.dispose();
-    }
-    if (_passwordController.mounted) {
-      _passwordController.dispose();
-    }
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -45,23 +40,16 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        // Verificar que los controladores estén disponibles antes de acceder a sus valores
-        String email = '';
-        String password = '';
-
-        if (_emailController.hasClients) {
-          email = _emailController.text.trim();
-        }
-        if (_passwordController.hasClients) {
-          password = _passwordController.text;
-        }
+        // La comprobación 'if (mounted)' más adelante protege el acceso a los controladores.
+        final email = _emailController.text.trim();
+        final password = _passwordController.text;
 
         await context.read<AuthProvider>().login(email, password);
 
         if (mounted) {
           // Limpiar los controladores antes de navegar para evitar problemas de estado
-          if (_emailController.hasClients) _emailController.clear();
-          if (_passwordController.hasClients) _passwordController.clear();
+          _emailController.clear();
+          _passwordController.clear();
 
           // Usar el servicio de navegación para evitar problemas de estado
           Navigator.pushReplacement(

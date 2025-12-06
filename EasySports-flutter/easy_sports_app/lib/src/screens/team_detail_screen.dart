@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:easy_sports_app/src/models/team.dart';
-import 'package:easy_sports_app/src/screens/invite_player_screen.dart';
 import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
@@ -30,6 +29,10 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
   void initState() {
     super.initState();
     _currentTeam = widget.team;
+    // Llamar a la función para cargar los datos del usuario y el equipo al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserDataAndTeamDetails();
+    });
   }
 
   Future<void> _loadUserDataAndTeamDetails() async {
@@ -158,6 +161,10 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // NOTA: Todos los botones de invitación en esta pantalla han sido unificados
+    // para navegar a `InvitePlayerScreen`. Esto asegura que siempre se utilice
+    // la interfaz moderna con selección múltiple, eliminando la confusión con
+    // pantallas de invitación antiguas.
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
