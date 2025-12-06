@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_sports_app/src/providers/auth_provider.dart';
 
-import 'all_matches_screen.dart';
+import 'package:easy_sports_app/src/screens/matches_dashboard_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -112,14 +112,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     if (_selectedSportIndex == 0) return _matches;
     final sportName = _sports[_selectedSportIndex]['name'] as String;
 
-    debugPrint("🔍 Filtrando por deporte: '$sportName'");
-
-    return _matches.where((m) {
-      final matchSport = m.deporte.toUpperCase();
-      final doesMatch = matchSport == sportName;
-      debugPrint("  - Partido ID ${m.id} (${matchSport}): ${doesMatch ? 'COINCIDE' : 'NO COINCIDE'}");
-      return doesMatch;
-    }).toList();
+    return _matches.where((m) => m.deporte.toUpperCase() == sportName).toList();
   }
 
   @override
@@ -577,7 +570,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const AllMatchesScreen()),
+                        MaterialPageRoute(builder: (context) => const MatchesDashboardScreen()),
                       );
                     },
                     child: const Text(

@@ -5,33 +5,41 @@ import 'package:easy_sports_app/src/services/api_service.dart';
 import 'package:easy_sports_app/src/theme/app_theme.dart';
 import 'package:easy_sports_app/src/widgets/sport_components.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class AllMatchesScreen extends StatefulWidget {
-  const AllMatchesScreen({super.key});
+class MatchesDashboardScreen extends StatefulWidget {
+  const MatchesDashboardScreen({super.key});
 
   @override
-  State<AllMatchesScreen> createState() => _AllMatchesScreenState();
+  State<MatchesDashboardScreen> createState() => _MatchesDashboardScreenState();
 }
 
-class _AllMatchesScreenState extends State<AllMatchesScreen> {
+class _MatchesDashboardScreenState extends State<MatchesDashboardScreen> with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
-  List<Match> _matches = [];
+  List<Match> _allMatches = [];
   bool _isLoading = true;
-  int _selectedSportIndex = 0;
   String? _errorMessage;
+  late TabController _tabController;
 
-  // Se mantiene la misma lista de deportes para consistencia
-  final List<Map<String, dynamic>> _sports = [
-    {'name': 'TODOS', 'icon': Icons.sports},
-    {'name': 'FUTBOL', 'icon': Icons.sports_soccer},
-    {'name': 'BASKET', 'icon': Icons.sports_basketball},
-    {'name': 'VOLEY', 'icon': Icons.sports_volleyball},
-  ];
+  final List<String> _tabs = ['ALL', 'ACTIVE', 'CLOSED'];
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() {
+      // Llama a setState solo cuando el índice del tab cambia
+      if (_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
     _fetchMatches();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchMatches() async {
@@ -47,7 +55,7 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
         final List<dynamic> matchesList = jsonData['content'] ?? [];
         if (mounted) {
           setState(() {
-            _matches = matchesList.map((matchJson) => Match.fromJson(matchJson)).toList();
+            _allMatches = matchesList.map((matchJson) => Match.fromJson(matchJson)).toList();
           });
         }
       } else {
@@ -72,10 +80,13 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
     }
   }
   
-  List<Match> get _filteredMatches {
-    if (_selectedSportIndex == 0) return _matches;
-    final sportName = _sports[_selectedSportIndex]['name'] as String;
-    return _matches.where((m) => m.deporte.toUpperCase() == sportName).toList();
+  List<Match> _getMatchesForTab(String tab) {
+    if (tab == 'ALL') return _allMatches;
+    if (tab == 'ACTIVE') {
+      return _allMatches.where((m) => m.estado == 'ABIERTO' || m.estado == 'EN_CURSO').toList();
+    }
+    // 'CLOSED'
+    return _allMatches.where((m) => m.estado == 'FINALIZADO' || m.estado == 'CANCELADO').toList();
   }
 
   @override
@@ -83,78 +94,94 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
-        title: const Text('Todos los Partidos'),
+        title: const Text('MATCHES', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2)),
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: AppTheme.primaryText),
+            onPressed: () {
+              // TODO: Implementar búsqueda
+            },
+          ),
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
-          : _errorMessage != null
-              ? _buildErrorState()
-              : Column(
-                  children: [
-                    _buildCategories(),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: _fetchMatches,
-                        color: AppTheme.primaryOrange,
-                        child: _filteredMatches.isEmpty
-                            ? const Center(child: Text('No hay partidos para el filtro seleccionado.'))
-                            : ListView.builder(
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _filteredMatches.length,
-                                itemBuilder: (context, index) {
-                                  return _buildMatchCard(_filteredMatches[index]);
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
         children: [
-          const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 60),
-          const SizedBox(height: 16),
-          Text(_errorMessage!, style: const TextStyle(fontSize: 16, color: AppTheme.secondaryText)),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _fetchMatches,
-            child: const Text('Reintentar'),
+          _buildTabBar(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryOrange))
+                : _errorMessage != null
+                    ? _buildErrorState()
+                    : TabBarView(
+                        controller: _tabController,
+                        children: _tabs.map((tab) {
+                          final matches = _getMatchesForTab(tab);
+                          return _buildMatchList(matches);
+                        }).toList(),
+                      ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategories() {
+  Widget _buildTabBar() {
     return Container(
-      height: 100,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _sports.length,
-        itemBuilder: (context, index) {
-          final sport = _sports[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: SportCategoryIcon(
-              icon: sport['icon'] as IconData,
-              label: sport['name'] as String,
-              isSelected: _selectedSportIndex == index,
-              onTap: () {
-                setState(() {
-                  _selectedSportIndex = index;
-                });
-              },
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: AppTheme.primaryOrange,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: AppTheme.secondaryText,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1,
+        ),
+        tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMatchList(List<Match> matches) {
+    if (matches.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sports, size: 80, color: AppTheme.secondaryText.withOpacity(0.3)),
+            const SizedBox(height: 16),
+            const Text(
+              'No hay partidos',
+              style: TextStyle(fontSize: 18, color: AppTheme.primaryText, fontWeight: FontWeight.w600),
             ),
-          );
+            const SizedBox(height: 8),
+            const Text(
+              'No se encontraron encuentros para esta categoría.',
+              style: TextStyle(fontSize: 14, color: AppTheme.secondaryText),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchMatches,
+      color: AppTheme.primaryOrange,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        itemCount: matches.length,
+        itemBuilder: (context, index) {
+          return _buildMatchCard(matches[index]);
         },
       ),
     );
@@ -171,6 +198,8 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
   }
 
   Widget _buildMatchCard(Match match) {
+    final dateFormat = DateFormat('dd MMM / HH:mm');
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -178,7 +207,7 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
           MaterialPageRoute(
             builder: (context) => MatchDetailScreen(match: match),
           ),
-        );
+        ).then((_) => _fetchMatches());
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -221,7 +250,7 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
                 const Icon(Icons.schedule, color: AppTheme.secondaryText, size: 16),
                 const SizedBox(width: 8),
                 Text(
-                  TimeOfDay.fromDateTime(match.fechaProgramada).format(context),
+                  dateFormat.format(match.fechaProgramada),
                   style: const TextStyle(color: AppTheme.secondaryText, fontSize: 14),
                 ),
               ],
@@ -253,7 +282,25 @@ class _AllMatchesScreenState extends State<AllMatchesScreen> {
       ),
     );
   }
-  
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 60),
+          const SizedBox(height: 16),
+          Text(_errorMessage!, style: const TextStyle(color: AppTheme.secondaryText)),
+          const SizedBox(height: 16),
+          PrimaryButton(
+            text: 'Retry',
+            onPressed: _fetchMatches,
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getSportIcon(String deporte) {
     final sport = deporte.toUpperCase();
     if (sport.contains('FUTBOL') || sport.contains('SOCCER')) {
